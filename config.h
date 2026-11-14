@@ -19,23 +19,22 @@ const int STBY = PA8;   // HIGH = driver enabled
 // ---------------- Sensor pins ----------------
 // LDR divider: 3.3V -> LDR -> PA4 -> 10k -> GND  (brighter = higher value)
 const int LDR_PIN = PA4;
-// IR sensor output, sensor powered from 3.3V
-const int IR_PIN  = PA5;
+// TCRT5000 IR reflective module (door sensor), powered from 3.3V.
+//   DO: LOW when something reflective is close (module's LED lights). Set the
+//       trigger distance with the module's potentiometer.
+//   AO: analog, LOWER = closer / more reflection. Optional; used for tuning.
+// Short range: reliable up to ~1-2 cm, best on a white/light surface.
+const int IR_DO_PIN = PA5;
+const int IR_AO_PIN = PA7;
+
+// 0 = decide "door closed" from DO (recommended)
+// 1 = decide from AO < IR_CLOSE_RAW (needs AO wired; calibrate with the test sketch)
+#define IR_USE_ANALOG 0
+const int IR_CLOSE_RAW = 2000;  // AO value (0..4095) at the door-closed distance
 
 // ---------------- Servo (unfurl) ----------------
 // Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.
 const int SERVO_PIN = PA6;  // TIM3_CH1
-
-// IR sensor type (part unknown for now):
-//   IR_DIGITAL - obstacle module (e.g. FC-51), OUT goes LOW when something is close.
-//                Set the ~5 cm trigger distance with the module's potentiometer.
-//   IR_ANALOG  - analog distance sensor (e.g. Sharp GP2Y0A). Higher = closer.
-#define IR_DIGITAL 1
-#define IR_ANALOG  2
-#define IR_MODE IR_DIGITAL
-
-const int IR_CLOSE_LEVEL = LOW;   // IR_DIGITAL: level meaning "object close"
-const int IR_CLOSE_RAW   = 2000;  // IR_ANALOG: raw value (0..4095) at ~5 cm - calibrate from serial log
 
 // ---------------- Thresholds ----------------
 const float IN_BOX_FRACTION = 0.5;  // in box when light < outside light * this

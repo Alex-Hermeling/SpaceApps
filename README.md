@@ -6,13 +6,13 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 - STM32F103C8T6 Blue Pill (official STMicroelectronics core or Roger Clark core)
 - TB6612FNG dual motor driver + 2× DC motors, 4× AA on VM
 - LDR (photoresistor) + 10 kΩ resistor
-- IR distance/obstacle sensor pointing at the door
+- TCRT5000 IR reflective sensor module pointing at the door
 
 ## Files
 | File | Contents |
 |---|---|
 | `SpaceApps.ino` | Mission state machine |
-| `config.h` | Pins, thresholds, timings, `IR_MODE` |
+| `config.h` | Pins, thresholds, timings, `IR_USE_ANALOG` |
 | `motors.h` | TB6612FNG motor control |
 | `sensors.h` | Light and IR door sensor |
 
@@ -37,8 +37,11 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 | Part | Blue Pill | Notes |
 |---|---|---|
 | LDR | 3.3 → LDR → **PA4** → 10 kΩ → G | Brighter = higher reading |
-| IR sensor VCC / GND | 3.3 / G | |
-| IR sensor OUT | **PA5** | Set `IR_MODE` in config.h (digital module or analog) |
+| TCRT5000 VCC / GND | 3.3 / G | |
+| TCRT5000 DO | **PA5** | LOW when the door is close; set range with the module's potentiometer |
+| TCRT5000 AO | **PA7** | Optional, for tuning (lower = closer) |
+
+The TCRT5000 only sees about 1–2 cm reliably. Mount it close to the door, and put white tape on the door where the sensor points.
 
 ### Servo
 | Servo wire | Connect to | Notes |
@@ -63,7 +66,7 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
 ## Motor test (`MotorTest/MotorTest.ino`)
-A separate sketch to test the motors and the servo on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
+A separate sketch to test the motors, servo and IR sensor on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
 
 | Key | Action | Key | Action |
 |---|---|---|---|
@@ -76,5 +79,6 @@ A separate sketch to test the motors and the servo on their own. Open it in the 
 | `0`–`180` + Enter | Servo to that angle | `w` | Servo sweep 0–180–0 |
 | `]` | Servo +10° | `[` | Servo −10° |
 | `v` | Release servo (go limp) | `h` | Help |
+| `i` | IR live readout on/off | `p` | IR reading once |
 
 Its pins are copied from `config.h`, so keep them the same if you change them.

@@ -13,6 +13,12 @@ const int SERVO_PIN = PA6;
 Servo servo;
 int servoAngle = 90;
 
+// ---- TCRT5000 IR sensor (same as config.h) ----
+const int IR_DO_PIN = PA5;  // LOW = something close
+const int IR_AO_PIN = PA7;  // analog, lower = closer (optional)
+bool irWatch = false;       // live IR readout on/off
+unsigned long lastIrPrint = 0;
+
 // ---- Motor pins (same as config.h) ----
 const int PWMA = PA0;
 const int AIN1 = PB12;
@@ -99,6 +105,16 @@ void servoSweep() {
   servoTo(90);
 }
 
+// ---------------- IR sensor ----------------
+void printIr() {
+  int d = digitalRead(IR_DO_PIN);
+  long sum = 0;
+  for (int i = 0; i < 8; i++) sum += analogRead(IR_AO_PIN);
+  Serial.print("IR  DO="); Serial.print(d);
+  Serial.print("  AO=");   Serial.print(sum / 8);
+  Serial.println(d == LOW ? "   CLOSE (door)" : "   far");
+}
+
 void printHelp() {
   Serial.println();
   Serial.println("=== MotorTest ===");
@@ -114,6 +130,8 @@ void printHelp() {
   Serial.println("  0..180  type an angle + Enter, e.g. 45");
   Serial.println("  ]  +10 deg            [  -10 deg");
   Serial.println("  w  sweep 0-180-0      v  release (go limp)");
+  Serial.println("IR sensor (DO PA5, AO PA7):");
+  Serial.println("  i  live readout on/off   p  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);
   Serial.print("   Servo: "); Serial.print(servoAngle); Serial.println(" deg");
@@ -125,6 +143,8 @@ void setup() {
 
   int pins[] = {AIN1, AIN2, BIN1, BIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
+  pinMode(IR_DO_PIN, INPUT_PULLUP);
+  pinMode(IR_AO_PIN, INPUT_ANALOG);
   pwmPinsMode();
 
 #if defined(ARDUINO_ARCH_STM32)
@@ -139,6 +159,11 @@ void setup() {
 }
 
 void loop() {
+  if (irWatch && millis() - lastIrPrint >= 200) {
+    lastIrPrint = millis();
+    printIr();
+  }
+
   if (!Serial.available()) return;
 
   // A number = servo angle
@@ -155,6 +180,8 @@ void loop() {
     case '[': servoTo(servoAngle - 10); break;
     case 'w': servoSweep(); break;
     case 'v': servo.detach(); Serial.println("Servo released"); break;
+    case 'i': irWatch = !irWatch; Serial.println(irWatch ? "IR live ON" : "IR live OFF"); break;
+    case 'p': printIr(); break;
     case 'f': Serial.println("Both forward");    motorA(speed);  motorB(speed);  break;
     case 'r': Serial.println("Both reverse");    motorA(-speed); motorB(-speed); break;
     case 'a': Serial.println("Motor A forward"); motorA(speed);  break;

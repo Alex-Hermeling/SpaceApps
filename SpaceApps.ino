@@ -67,7 +67,8 @@ void logSensors() {
   lastLog = millis();
   Serial.print(STATE_NAMES[state]);
   Serial.print("  light=");  Serial.print(readLight());
-  Serial.print("  ir=");     Serial.print(readIrRaw());
+  Serial.print("  irDO=");   Serial.print(readIrDigital());
+  Serial.print("  irAO=");   Serial.print(readIrAnalog());
   Serial.print("  door=");   Serial.println(doorClosed() ? "closed" : "open");
 }
 
