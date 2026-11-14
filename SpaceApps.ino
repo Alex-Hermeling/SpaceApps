@@ -82,21 +82,41 @@ void setup() {
   Serial.println("SpaceApps: TB6612FNG ready");
 }
 
-// Simple test: each motor forward, then reverse, then stop.
-void loop() {
-  Serial.println("Forward");
-  motorA(180); motorB(180);
-  delay(2000);
+// ---- Distance driving (time-based, no encoders) ----
+const int   DRIVE_SPEED  = 180;   // 0..255
+// How far the robot travels per second at DRIVE_SPEED.
+// GUESS - calibrate: set CALIBRATE to true, measure how far it goes in 2 s,
+// then set CM_PER_SEC = measured_cm / 2.0
+const float CM_PER_SEC   = 25.0;
+const bool  CALIBRATE    = false;
+const float TARGET_CM    = 30.0;
 
-  Serial.println("Brake");
+void driveDistance(float cm) {
+  unsigned long ms = (unsigned long)(cm / CM_PER_SEC * 1000.0);
+  Serial.print("Driving "); Serial.print(cm); Serial.print(" cm (");
+  Serial.print(ms); Serial.println(" ms)");
+  motorA(DRIVE_SPEED); motorB(DRIVE_SPEED);
+  delay(ms);
   brakeAll();
-  delay(1000);
+}
 
-  Serial.println("Reverse");
-  motorA(-180); motorB(-180);
-  delay(2000);
+bool done = false;
 
-  Serial.println("Coast");
-  motorA(0); motorB(0);
-  delay(2000);
+void loop() {
+  if (done) return;  // run once; press RESET on the Blue Pill to go again
+
+  Serial.println("Starting in 3 s...");
+  delay(3000);
+
+  if (CALIBRATE) {
+    Serial.println("Calibration: driving 2 s - measure the distance");
+    motorA(DRIVE_SPEED); motorB(DRIVE_SPEED);
+    delay(2000);
+    brakeAll();
+  } else {
+    driveDistance(TARGET_CM);
+  }
+
+  Serial.println("Done");
+  done = true;
 }
