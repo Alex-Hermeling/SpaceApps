@@ -60,7 +60,7 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 | WAIT_IN_BOX | Door within ~5 cm **and** light < 50% of outside, for 2 s; inside light logged |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
 | DOOR_SETTLE | 5 s timer |
-| DRIVE_OUT | Drives slowly; light above the inside/outside midpoint for 2 s, then 1.5 s more. Safety stop after 10 s |
+| DRIVE_OUT | Drives slowly; light above the inside/outside midpoint for 2 s, then 5 s more. Safety stop after 20 s |
 | STABILIZE | Stands still 3 s |
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
