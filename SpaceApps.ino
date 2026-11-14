@@ -89,6 +89,7 @@ const int   DRIVE_SPEED  = 180;   // 0..255
 // then set CM_PER_SEC = measured_cm / 2.0
 const float CM_PER_SEC   = 25.0;
 const bool  CALIBRATE    = false;
+const bool  DIAGNOSE     = true;   // set false once the motors move
 const float TARGET_CM    = 30.0;
 
 void driveDistance(float cm) {
@@ -108,7 +109,20 @@ void loop() {
   Serial.println("Starting in 3 s...");
   delay(3000);
 
-  if (CALIBRATE) {
+  if (DIAGNOSE) {
+    // Bypass PWM: drive PWMA/PWMB as plain HIGH outputs (full speed).
+    // Motors spin -> wiring/driver OK, PWM is the problem.
+    // Motors don't spin -> check power, ground, STBY, VCC, motor wires.
+    Serial.println("DIAGNOSE: full speed forward 5 s, PWM bypassed");
+    pinMode(PWMA, OUTPUT); pinMode(PWMB, OUTPUT);
+    digitalWrite(STBY, HIGH);
+    digitalWrite(AIN1, HIGH); digitalWrite(AIN2, LOW);
+    digitalWrite(BIN1, HIGH); digitalWrite(BIN2, LOW);
+    digitalWrite(PWMA, HIGH); digitalWrite(PWMB, HIGH);
+    delay(5000);
+    digitalWrite(PWMA, LOW); digitalWrite(PWMB, LOW);
+    digitalWrite(AIN1, LOW); digitalWrite(BIN1, LOW);
+  } else if (CALIBRATE) {
     Serial.println("Calibration: driving 2 s - measure the distance");
     motorA(DRIVE_SPEED); motorB(DRIVE_SPEED);
     delay(2000);
