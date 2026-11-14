@@ -14,8 +14,7 @@ Servo servo;
 int servoAngle = 90;
 
 // ---- TCRT5000 IR sensor (same as config.h) ----
-const int IR_DO_PIN = PA5;  // LOW = something close
-const int IR_AO_PIN = PA7;  // analog, lower = closer (optional)
+const int IR_PIN = PA5;     // OUT: LOW = something close
 bool irWatch = false;       // live IR readout on/off
 unsigned long lastIrPrint = 0;
 
@@ -107,11 +106,8 @@ void servoSweep() {
 
 // ---------------- IR sensor ----------------
 void printIr() {
-  int d = digitalRead(IR_DO_PIN);
-  long sum = 0;
-  for (int i = 0; i < 8; i++) sum += analogRead(IR_AO_PIN);
-  Serial.print("IR  DO="); Serial.print(d);
-  Serial.print("  AO=");   Serial.print(sum / 8);
+  int d = digitalRead(IR_PIN);
+  Serial.print("IR  OUT="); Serial.print(d);
   Serial.println(d == LOW ? "   CLOSE (door)" : "   far");
 }
 
@@ -130,7 +126,7 @@ void printHelp() {
   Serial.println("  0..180  type an angle + Enter, e.g. 45");
   Serial.println("  ]  +10 deg            [  -10 deg");
   Serial.println("  w  sweep 0-180-0      v  release (go limp)");
-  Serial.println("IR sensor (DO PA5, AO PA7):");
+  Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);
@@ -143,8 +139,7 @@ void setup() {
 
   int pins[] = {AIN1, AIN2, BIN1, BIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
-  pinMode(IR_DO_PIN, INPUT_PULLUP);
-  pinMode(IR_AO_PIN, INPUT_ANALOG);
+  pinMode(IR_PIN, INPUT_PULLUP);
   pwmPinsMode();
 
 #if defined(ARDUINO_ARCH_STM32)

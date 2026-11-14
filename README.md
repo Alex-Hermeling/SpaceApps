@@ -12,7 +12,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 | File | Contents |
 |---|---|
 | `SpaceApps.ino` | Mission state machine |
-| `config.h` | Pins, thresholds, timings, `IR_USE_ANALOG` |
+| `config.h` | Pins, thresholds, timings |
 | `motors.h` | TB6612FNG motor control |
 | `sensors.h` | Light and IR door sensor |
 
@@ -38,8 +38,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 |---|---|---|
 | LDR | 3.3 → LDR → **PA4** → 10 kΩ → G | Brighter = higher reading |
 | TCRT5000 VCC / GND | 3.3 / G | |
-| TCRT5000 DO | **PA5** | LOW when the door is close; set range with the module's potentiometer |
-| TCRT5000 AO | **PA7** | Optional, for tuning (lower = closer) |
+| TCRT5000 OUT | **PA5** | LOW when the door is close; set range with the module's potentiometer |
 
 The TCRT5000 only sees about 1–2 cm reliably. Mount it close to the door, and put white tape on the door where the sensor points.
 

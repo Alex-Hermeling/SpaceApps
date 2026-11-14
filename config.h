@@ -19,18 +19,11 @@ const int STBY = PA8;   // HIGH = driver enabled
 // ---------------- Sensor pins ----------------
 // LDR divider: 3.3V -> LDR -> PA4 -> 10k -> GND  (brighter = higher value)
 const int LDR_PIN = PA4;
-// TCRT5000 IR reflective module (door sensor), powered from 3.3V.
-//   DO: LOW when something reflective is close (module's LED lights). Set the
-//       trigger distance with the module's potentiometer.
-//   AO: analog, LOWER = closer / more reflection. Optional; used for tuning.
+// TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
+//   OUT: LOW when something reflective is close (module's LED lights).
+//   Set the trigger distance with the module's potentiometer.
 // Short range: reliable up to ~1-2 cm, best on a white/light surface.
-const int IR_DO_PIN = PA5;
-const int IR_AO_PIN = PA7;
-
-// 0 = decide "door closed" from DO (recommended)
-// 1 = decide from AO < IR_CLOSE_RAW (needs AO wired; calibrate with the test sketch)
-#define IR_USE_ANALOG 0
-const int IR_CLOSE_RAW = 2000;  // AO value (0..4095) at the door-closed distance
+const int IR_PIN = PA5;
 
 // ---------------- Servo (unfurl) ----------------
 // Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.

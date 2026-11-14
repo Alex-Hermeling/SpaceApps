@@ -7,8 +7,7 @@ inline void sensorsInit() {
   analogReadResolution(12);  // official core defaults to 10-bit; use 0..4095 like Roger's core
 #endif
   pinMode(LDR_PIN, INPUT_ANALOG);
-  pinMode(IR_DO_PIN, INPUT_PULLUP);
-  pinMode(IR_AO_PIN, INPUT_ANALOG);
+  pinMode(IR_PIN, INPUT_PULLUP);
 }
 
 // Light level, 0 (dark) .. 4095 (bright), averaged over 16 samples.
@@ -18,21 +17,8 @@ inline int readLight() {
   return sum / 16;
 }
 
-// TCRT5000 digital output: LOW = something close.
-inline int readIrDigital() { return digitalRead(IR_DO_PIN); }
-
-// TCRT5000 analog output, 0..4095, lower = closer. Meaningless if AO isn't wired.
-inline int readIrAnalog() {
-  long sum = 0;
-  for (int i = 0; i < 8; i++) sum += analogRead(IR_AO_PIN);
-  return sum / 8;
-}
+// TCRT5000 output: LOW = something close.
+inline int readIr() { return digitalRead(IR_PIN); }
 
 // True when the (closed) door is in front of the sensor.
-inline bool doorClosed() {
-#if IR_USE_ANALOG
-  return readIrAnalog() < IR_CLOSE_RAW;
-#else
-  return readIrDigital() == LOW;
-#endif
-}
+inline bool doorClosed() { return readIr() == LOW; }
