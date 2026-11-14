@@ -78,6 +78,7 @@ A separate sketch to test the motors, servo, IR sensor and light sensor on their
 | `0`–`180` + Enter | Servo to that angle | `w` | Servo sweep 0–180–0 |
 | `]` | Servo +10° | `[` | Servo −10° |
 | `v` | Release servo (go limp) | `h` | Help |
+| `,` | Servo slower | `.` | Servo faster |
 | `i` | IR live readout on/off | `p` | IR reading once |
 | `l` | Light live readout on/off | `k` | Light reading once |
 

@@ -12,6 +12,7 @@
 const int SERVO_PIN = PA6;
 Servo servo;
 int servoAngle = 90;
+int servoStepMs = 20;  // ms per degree: higher = slower. 20 -> 180 deg in 3.6 s. 0 = full speed
 
 // ---- TCRT5000 IR sensor (same as config.h) ----
 const int IR_PIN = PA5;
@@ -96,19 +97,31 @@ void diagnose() {
 }
 
 // ---------------- Servo ----------------
+// Move slowly: 1 degree every servoStepMs.
 void servoTo(int angle) {
-  servoAngle = constrain(angle, 0, 180);
+  angle = constrain(angle, 0, 180);
   if (!servo.attached()) servo.attach(SERVO_PIN);
+  Serial.print("Servo -> "); Serial.print(angle); Serial.println(" deg");
+  while (servoAngle != angle) {
+    servoAngle += (angle > servoAngle) ? 1 : -1;
+    servo.write(servoAngle);
+    delay(servoStepMs);
+  }
   servo.write(servoAngle);
-  Serial.print("Servo -> "); Serial.print(servoAngle); Serial.println(" deg");
 }
 
 void servoSweep() {
   Serial.println("Servo sweep 0 -> 180 -> 0");
-  if (!servo.attached()) servo.attach(SERVO_PIN);
-  for (int a = 0; a <= 180; a += 5)  { servo.write(a); delay(30); }
-  for (int a = 180; a >= 0; a -= 5)  { servo.write(a); delay(30); }
+  servoTo(0);
+  servoTo(180);
+  servoTo(0);
   servoTo(90);
+}
+
+void printServoSpeed() {
+  Serial.print("Servo speed: "); Serial.print(servoStepMs);
+  Serial.print(" ms/deg (180 deg in ");
+  Serial.print(servoStepMs * 180 / 1000.0, 1); Serial.println(" s)");
 }
 
 // ---------------- IR sensor ----------------
@@ -144,13 +157,15 @@ void printHelp() {
   Serial.println("  0..180  type an angle + Enter, e.g. 45");
   Serial.println("  ]  +10 deg            [  -10 deg");
   Serial.println("  w  sweep 0-180-0      v  release (go limp)");
+  Serial.println("  ,  servo slower       .  servo faster");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
   Serial.println("Light sensor (LDR PA4):");
   Serial.println("  l  live readout on/off   k  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);
-  Serial.print("   Servo: "); Serial.print(servoAngle); Serial.println(" deg");
+  Serial.print("   Servo: "); Serial.print(servoAngle); Serial.print(" deg, ");
+  Serial.print(servoStepMs); Serial.println(" ms/deg");
 }
 
 void setup() {
@@ -173,7 +188,9 @@ void setup() {
   motorA(0); motorB(0);
   digitalWrite(STBY, HIGH);
 
-  servoTo(90);  // centre the servo
+  // Centre the servo. Its real position is unknown at power-up, so this first move is at full speed.
+  servo.attach(SERVO_PIN);
+  servo.write(servoAngle);
   printHelp();
 }
 
@@ -203,6 +220,8 @@ void loop() {
     case '[': servoTo(servoAngle - 10); break;
     case 'w': servoSweep(); break;
     case 'v': servo.detach(); Serial.println("Servo released"); break;
+    case ',': servoStepMs = (servoStepMs == 0) ? 5 : min(servoStepMs * 2, 200); printServoSpeed(); break;
+    case '.': servoStepMs = (servoStepMs <= 5) ? 0 : servoStepMs / 2;           printServoSpeed(); break;
     case 'i': irWatch = !irWatch; Serial.println(irWatch ? "IR live ON" : "IR live OFF"); break;
     case 'p': printIr(); break;
     case 'l': lightWatch = !lightWatch; Serial.println(lightWatch ? "Light live ON" : "Light live OFF"); break;
