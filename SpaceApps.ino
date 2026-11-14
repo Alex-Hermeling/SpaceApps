@@ -1,19 +1,21 @@
 // SpaceApps
 // Two DC motors driven by a TB6612FNG dual H-bridge.
-// Pin map assumes an Arduino Uno / Nano (PWM on 3, 5, 6, 9, 10, 11).
+// Board: STM32F103C8T6 "Blue Pill" (STM32duino core). 3.3V logic.
+// Avoided pins: PA9/PA10 (serial upload), PA11/PA12 (USB),
+// PA13/PA14 (SWD / ST-Link), PC13 (onboard LED), PB2 (BOOT1).
 
 // ---- Motor A ----
-const int PWMA = 5;   // speed (PWM)
-const int AIN1 = 4;   // direction
-const int AIN2 = 7;   // direction
+const int PWMA = PA0;   // speed (PWM, TIM2_CH1)
+const int AIN1 = PB12;  // direction
+const int AIN2 = PB13;  // direction
 
 // ---- Motor B ----
-const int PWMB = 6;   // speed (PWM)
-const int BIN1 = 8;   // direction
-const int BIN2 = 12;  // direction
+const int PWMB = PA1;   // speed (PWM, TIM2_CH2)
+const int BIN1 = PB14;  // direction
+const int BIN2 = PB15;  // direction
 
 // ---- Standby ----
-const int STBY = 9;   // HIGH = driver enabled, LOW = driver asleep
+const int STBY = PA8;   // HIGH = driver enabled, LOW = driver asleep
 
 // speed: -255 (full reverse) .. 0 (stop) .. 255 (full forward)
 void setMotor(int pwmPin, int in1, int in2, int speed) {
@@ -45,6 +47,10 @@ void setup() {
 
   int pins[] = {PWMA, AIN1, AIN2, PWMB, BIN1, BIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
+
+  // 20 kHz PWM is above hearing range, so the motors don't whine.
+  // (TB6612FNG supports up to 100 kHz.)
+  analogWriteFrequency(20000);
 
   motorA(0);
   motorB(0);
