@@ -17,7 +17,7 @@ const int BIN2 = PB15;  // direction
 const int STBY = PA8;   // HIGH = driver enabled
 
 // ---------------- Sensor pins ----------------
-// LDR divider: 3.3V -> LDR -> PA4 -> 10k -> GND  (brighter = higher value)
+// LDR divider: 3.3V -> LDR -> PA4 -> 8k -> GND  (brighter = higher value)
 const int LDR_PIN = PA4;
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
 //   OUT: LOW when something reflective is close (module's LED lights).

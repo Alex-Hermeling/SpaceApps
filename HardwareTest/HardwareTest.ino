@@ -19,7 +19,7 @@ bool irWatch = false;       // live IR readout on/off
 unsigned long lastIrPrint = 0;
 
 // ---- LDR light sensor (same as config.h) ----
-// 3.3V -> LDR -> PA4 -> 10k -> GND  (brighter = higher value, 0..4095)
+// 3.3V -> LDR -> PA4 -> 8k -> GND  (brighter = higher value, 0..4095)
 const int LDR_PIN = PA4;
 bool lightWatch = false;    // live light readout on/off
 unsigned long lastLightPrint = 0;

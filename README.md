@@ -5,7 +5,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 ## Hardware
 - STM32F103C8T6 Blue Pill (official STMicroelectronics core or Roger Clark core)
 - TB6612FNG dual motor driver + 2× DC motors, 4× AA on VM
-- LDR (photoresistor) + 10 kΩ resistor
+- LDR (photoresistor) + 8 kΩ resistor (4.7–22 kΩ works)
 - TCRT5000 IR reflective sensor module pointing at the door
 
 ## Files
@@ -36,7 +36,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 ### Sensors
 | Part | Blue Pill | Notes |
 |---|---|---|
-| LDR | 3.3 → LDR → **PA4** → 10 kΩ → G | Brighter = higher reading |
+| LDR | 3.3 → LDR → **PA4** → 8 kΩ → G | Brighter = higher reading |
 | TCRT5000 VCC / GND | 3.3 / G | |
 | TCRT5000 OUT | **PA5** | LOW when the door is close; set range with the module's potentiometer |
 
