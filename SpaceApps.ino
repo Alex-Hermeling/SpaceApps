@@ -17,17 +17,6 @@ const int BIN2 = PB15;  // direction
 // ---- Standby ----
 const int STBY = PA8;   // HIGH = driver enabled, LOW = driver asleep
 
-// Write a 0..255 duty cycle to a PWM pin.
-// The Roger Clark core (ARDUINO_ARCH_STM32F1) needs the pin in PWM mode and
-// uses 16-bit duty (default timer overflow 65535), so scale 0..255 -> 0..65535.
-void writeSpeed(int pin, int duty) {
-#if defined(ARDUINO_ARCH_STM32F1)
-  pwmWrite(pin, duty * 257);
-#else
-  analogWrite(pin, duty);
-#endif
-}
-
 // speed: -255 (full reverse) .. 0 (stop) .. 255 (full forward)
 void setMotor(int pwmPin, int in1, int in2, int speed) {
   speed = constrain(speed, -255, 255);
@@ -42,38 +31,26 @@ void setMotor(int pwmPin, int in1, int in2, int speed) {
     digitalWrite(in1, LOW);
     digitalWrite(in2, LOW);
   }
-  writeSpeed(pwmPin, abs(speed));
+  analogWrite(pwmPin, abs(speed));
 }
 
 void motorA(int speed) { setMotor(PWMA, AIN1, AIN2, speed); }
 void motorB(int speed) { setMotor(PWMB, BIN1, BIN2, speed); }
 
 void brakeAll() {
-  digitalWrite(AIN1, HIGH); digitalWrite(AIN2, HIGH); writeSpeed(PWMA, 0);
-  digitalWrite(BIN1, HIGH); digitalWrite(BIN2, HIGH); writeSpeed(PWMB, 0);
+  digitalWrite(AIN1, HIGH); digitalWrite(AIN2, HIGH); analogWrite(PWMA, 0);
+  digitalWrite(BIN1, HIGH); digitalWrite(BIN2, HIGH); analogWrite(PWMB, 0);
 }
 
 void setup() {
   Serial.begin(115200);
 
-  int pins[] = {AIN1, AIN2, BIN1, BIN2, STBY};
+  int pins[] = {PWMA, AIN1, AIN2, PWMB, BIN1, BIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
 
-#if defined(ARDUINO_ARCH_STM32F1)
-  // Roger Clark core: OUTPUT mode disconnects the timer, so PWM pins need PWM mode.
-  pinMode(PWMA, PWM);
-  pinMode(PWMB, PWM);
-#else
-  pinMode(PWMA, OUTPUT);
-  pinMode(PWMB, OUTPUT);
-#endif
-
   // 20 kHz PWM is above hearing range, so the motors don't whine.
-  // (TB6612FNG supports up to 100 kHz.) Only the official STMicroelectronics
-  // core has analogWriteFrequency(); the Roger Clark core uses its default PWM.
-#if defined(ARDUINO_ARCH_STM32)
+  // (TB6612FNG supports up to 100 kHz.)
   analogWriteFrequency(20000);
-#endif
 
   motorA(0);
   motorB(0);
@@ -82,55 +59,21 @@ void setup() {
   Serial.println("SpaceApps: TB6612FNG ready");
 }
 
-// ---- Distance driving (time-based, no encoders) ----
-const int   DRIVE_SPEED  = 180;   // 0..255
-// How far the robot travels per second at DRIVE_SPEED.
-// GUESS - calibrate: set CALIBRATE to true, measure how far it goes in 2 s,
-// then set CM_PER_SEC = measured_cm / 2.0
-const float CM_PER_SEC   = 25.0;
-const bool  CALIBRATE    = false;
-const bool  DIAGNOSE     = true;   // set false once the motors move
-const float TARGET_CM    = 30.0;
-
-void driveDistance(float cm) {
-  unsigned long ms = (unsigned long)(cm / CM_PER_SEC * 1000.0);
-  Serial.print("Driving "); Serial.print(cm); Serial.print(" cm (");
-  Serial.print(ms); Serial.println(" ms)");
-  motorA(DRIVE_SPEED); motorB(DRIVE_SPEED);
-  delay(ms);
-  brakeAll();
-}
-
-bool done = false;
-
+// Simple test: each motor forward, then reverse, then stop.
 void loop() {
-  if (done) return;  // run once; press RESET on the Blue Pill to go again
+  Serial.println("Forward");
+  motorA(100); motorB(100);
+  delay(2000);
 
-  Serial.println("Starting in 3 s...");
-  delay(3000);
+  Serial.println("Brake");
+  brakeAll();
+  delay(1000);
 
-  if (DIAGNOSE) {
-    // Bypass PWM: drive PWMA/PWMB as plain HIGH outputs (full speed).
-    // Motors spin -> wiring/driver OK, PWM is the problem.
-    // Motors don't spin -> check power, ground, STBY, VCC, motor wires.
-    Serial.println("DIAGNOSE: full speed forward 5 s, PWM bypassed");
-    pinMode(PWMA, OUTPUT); pinMode(PWMB, OUTPUT);
-    digitalWrite(STBY, HIGH);
-    digitalWrite(AIN1, HIGH); digitalWrite(AIN2, LOW);
-    digitalWrite(BIN1, HIGH); digitalWrite(BIN2, LOW);
-    digitalWrite(PWMA, HIGH); digitalWrite(PWMB, HIGH);
-    delay(5000);
-    digitalWrite(PWMA, LOW); digitalWrite(PWMB, LOW);
-    digitalWrite(AIN1, LOW); digitalWrite(BIN1, LOW);
-  } else if (CALIBRATE) {
-    Serial.println("Calibration: driving 2 s - measure the distance");
-    motorA(DRIVE_SPEED); motorB(DRIVE_SPEED);
-    delay(2000);
-    brakeAll();
-  } else {
-    driveDistance(TARGET_CM);
-  }
+  Serial.println("Reverse");
+  motorA(-100); motorB(-100);
+  delay(2000);
 
-  Serial.println("Done");
-  done = true;
+  Serial.println("Coast");
+  motorA(0); motorB(0);
+  delay(2000);
 }
