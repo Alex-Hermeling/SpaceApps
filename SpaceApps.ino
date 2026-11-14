@@ -49,8 +49,11 @@ void setup() {
   for (int p : pins) pinMode(p, OUTPUT);
 
   // 20 kHz PWM is above hearing range, so the motors don't whine.
-  // (TB6612FNG supports up to 100 kHz.)
+  // (TB6612FNG supports up to 100 kHz.) Only the official STMicroelectronics
+  // core has analogWriteFrequency(); the Roger Clark core uses its default PWM.
+#if defined(ARDUINO_ARCH_STM32)
   analogWriteFrequency(20000);
+#endif
 
   motorA(0);
   motorB(0);
