@@ -5,8 +5,9 @@
 //   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
 //        -> STABILIZE -> PARK_SERVO -> READY_TO_UNFURL
 //
-// Servo rule: the program always ends with the servo at 90 (SERVO_PARK_ANGLE),
-// so at power-up it is assumed to be at 90. It goes to 0 before entering the box.
+// Servo rule: the program always ends with the servo at SERVO_PARK_ANGLE (0),
+// so at power-up it is assumed to be there. STOW_SERVO / PARK_SERVO make sure it is
+// at SERVO_STOW_ANGLE before the box and back at SERVO_PARK_ANGLE at the end.
 //
 // Pins, thresholds and timings: config.h
 // Motor control: motors.h    Sensors: sensors.h    Servo: panel_servo.h
@@ -85,7 +86,7 @@ void setup() {
   delay(1500);  // give the Serial Monitor time to connect
   motorsInit();
   sensorsInit();
-  servoInit();  // assumes the servo is at 90 (where the last run left it)
+  servoInit();  // assumes the servo is at SERVO_PARK_ANGLE (where the last run left it)
   Serial.println("SpaceApps starting");
   enterState(BOOT);
 }
@@ -111,7 +112,8 @@ void runMission() {
     case STOW_SERVO:
       // Fold the servo to 0 before going in the box.
       if (servoAtTarget()) {
-        Serial.println("Servo stowed at 0 - put the rover in the box");
+        Serial.print("Servo stowed at "); Serial.print(SERVO_STOW_ANGLE);
+        Serial.println(" - put the rover in the box");
         enterState(WAIT_IN_BOX);
       }
       break;
@@ -176,9 +178,9 @@ void runMission() {
       break;
 
     case PARK_SERVO:
-      // Always leave the servo at 90 at the end, so the next power-up can assume it.
+      // Always leave the servo at SERVO_PARK_ANGLE at the end, so the next power-up can assume it.
       if (servoAtTarget()) {
-        Serial.println("Servo parked at 90");
+        Serial.print("Servo parked at "); Serial.println(SERVO_PARK_ANGLE);
         Serial.println("READY TO UNFURL");
         enterState(READY_TO_UNFURL);
       }

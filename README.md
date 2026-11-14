@@ -57,14 +57,14 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 ## Mission states
 | State | Moves on when |
 |---|---|
-| BOOT | 2 s of outside light averaged and logged (servo assumed at 90°) |
-| STOW_SERVO | Servo slowly turned 90° → 0° |
+| BOOT | 2 s of outside light averaged and logged (servo assumed at 0°) |
+| STOW_SERVO | Servo slowly to the in-box angle (0°, so already there) |
 | WAIT_IN_BOX | Door within ~5 cm **and** light < 50% of outside, for 2 s; inside light logged |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
 | DOOR_SETTLE | 5 s timer |
 | DRIVE_OUT | Drives slowly; light above the inside/outside midpoint for 2 s, then 5 s more. Safety stop after 20 s |
 | STABILIZE | Stands still 3 s |
-| PARK_SERVO | Servo slowly turned back to 90° |
+| PARK_SERVO | Servo slowly back to 0° (start/end angle) |
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
 ## Hardware test (`HardwareTest/HardwareTest.ino`)
@@ -82,11 +82,11 @@ A separate sketch to test the motors, servo, IR sensor and light sensor on their
 | `]` | Servo +10° | `[` | Servo −10° |
 | `v` | Release servo (go limp) | `h` | Help |
 | `,` | Servo slower | `.` | Servo faster |
-| `x` | Park servo at 90° (before powering off) | | |
+| `x` | Park servo at 0° (before powering off) | | |
 | `i` | IR live readout on/off | `p` | IR reading once |
 | `l` | Light live readout on/off | `k` | Light reading once |
 
 Its pins are copied from `config.h`, so keep them the same if you change them.
 
 ## Servo rule
-Every program ends with the servo at **90°**, so at power-up the code assumes it is at 90°. The mission turns it to 0° before entering the box and back to 90° at the end. In HardwareTest, press `x` before powering off. If a run is cut short (reset or power off) with the servo elsewhere, it snaps to 90° at the next power-up.
+Every program ends with the servo at **0°**, so at power-up the code assumes it is at 0° (`SERVO_PARK_ANGLE` in config.h). The mission makes sure it is at 0° before entering the box and at the end. In HardwareTest, press `x` before powering off. If a run is cut short (reset or power off) with the servo elsewhere, it snaps to 0° at the next power-up.
