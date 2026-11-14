@@ -18,6 +18,12 @@ const int IR_PIN = PA5;     // OUT: LOW = something close
 bool irWatch = false;       // live IR readout on/off
 unsigned long lastIrPrint = 0;
 
+// ---- LDR light sensor (same as config.h) ----
+// 3.3V -> LDR -> PA4 -> 10k -> GND  (brighter = higher value, 0..4095)
+const int LDR_PIN = PA4;
+bool lightWatch = false;    // live light readout on/off
+unsigned long lastLightPrint = 0;
+
 // ---- Motor pins (same as config.h) ----
 const int PWMA = PA0;
 const int AIN1 = PB12;
@@ -111,6 +117,17 @@ void printIr() {
   Serial.println(d == LOW ? "   CLOSE (door)" : "   far");
 }
 
+// ---------------- Light sensor ----------------
+void printLight() {
+  long sum = 0;
+  for (int i = 0; i < 16; i++) sum += analogRead(LDR_PIN);
+  int v = sum / 16;
+  Serial.print("LIGHT "); Serial.print(v);
+  Serial.print("  ");
+  for (int i = 0; i < v / 205; i++) Serial.print('#');  // 0..20 char bar
+  Serial.println();
+}
+
 void printHelp() {
   Serial.println();
   Serial.println("=== MotorTest ===");
@@ -128,6 +145,8 @@ void printHelp() {
   Serial.println("  w  sweep 0-180-0      v  release (go limp)");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
+  Serial.println("Light sensor (LDR PA4):");
+  Serial.println("  l  live readout on/off   k  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);
   Serial.print("   Servo: "); Serial.print(servoAngle); Serial.println(" deg");
@@ -140,6 +159,10 @@ void setup() {
   int pins[] = {AIN1, AIN2, BIN1, BIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
   pinMode(IR_PIN, INPUT_PULLUP);
+  pinMode(LDR_PIN, INPUT_ANALOG);
+#if defined(ARDUINO_ARCH_STM32)
+  analogReadResolution(12);  // official core defaults to 10-bit
+#endif
   pwmPinsMode();
 
 #if defined(ARDUINO_ARCH_STM32)
@@ -157,6 +180,10 @@ void loop() {
   if (irWatch && millis() - lastIrPrint >= 200) {
     lastIrPrint = millis();
     printIr();
+  }
+  if (lightWatch && millis() - lastLightPrint >= 200) {
+    lastLightPrint = millis();
+    printLight();
   }
 
   if (!Serial.available()) return;
@@ -177,6 +204,8 @@ void loop() {
     case 'v': servo.detach(); Serial.println("Servo released"); break;
     case 'i': irWatch = !irWatch; Serial.println(irWatch ? "IR live ON" : "IR live OFF"); break;
     case 'p': printIr(); break;
+    case 'l': lightWatch = !lightWatch; Serial.println(lightWatch ? "Light live ON" : "Light live OFF"); break;
+    case 'k': printLight(); break;
     case 'f': Serial.println("Both forward");    motorA(speed);  motorB(speed);  break;
     case 'r': Serial.println("Both reverse");    motorA(-speed); motorB(-speed); break;
     case 'a': Serial.println("Motor A forward"); motorA(speed);  break;

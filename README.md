@@ -65,7 +65,7 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
 ## Motor test (`MotorTest/MotorTest.ino`)
-A separate sketch to test the motors, servo and IR sensor on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
+A separate sketch to test the motors, servo, IR sensor and light sensor on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
 
 | Key | Action | Key | Action |
 |---|---|---|---|
@@ -79,5 +79,6 @@ A separate sketch to test the motors, servo and IR sensor on their own. Open it 
 | `]` | Servo +10° | `[` | Servo −10° |
 | `v` | Release servo (go limp) | `h` | Help |
 | `i` | IR live readout on/off | `p` | IR reading once |
+| `l` | Light live readout on/off | `k` | Light reading once |
 
 Its pins are copied from `config.h`, so keep them the same if you change them.
