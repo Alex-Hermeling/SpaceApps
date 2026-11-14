@@ -17,6 +17,17 @@ const int BIN2 = PB15;  // direction
 // ---- Standby ----
 const int STBY = PA8;   // HIGH = driver enabled, LOW = driver asleep
 
+// Write a 0..255 duty cycle to a PWM pin.
+// The Roger Clark core (ARDUINO_ARCH_STM32F1) needs the pin in PWM mode and
+// uses 16-bit duty (default timer overflow 65535), so scale 0..255 -> 0..65535.
+void writeSpeed(int pin, int duty) {
+#if defined(ARDUINO_ARCH_STM32F1)
+  pwmWrite(pin, duty * 257);
+#else
+  analogWrite(pin, duty);
+#endif
+}
+
 // speed: -255 (full reverse) .. 0 (stop) .. 255 (full forward)
 void setMotor(int pwmPin, int in1, int in2, int speed) {
   speed = constrain(speed, -255, 255);
@@ -31,22 +42,31 @@ void setMotor(int pwmPin, int in1, int in2, int speed) {
     digitalWrite(in1, LOW);
     digitalWrite(in2, LOW);
   }
-  analogWrite(pwmPin, abs(speed));
+  writeSpeed(pwmPin, abs(speed));
 }
 
 void motorA(int speed) { setMotor(PWMA, AIN1, AIN2, speed); }
 void motorB(int speed) { setMotor(PWMB, BIN1, BIN2, speed); }
 
 void brakeAll() {
-  digitalWrite(AIN1, HIGH); digitalWrite(AIN2, HIGH); analogWrite(PWMA, 0);
-  digitalWrite(BIN1, HIGH); digitalWrite(BIN2, HIGH); analogWrite(PWMB, 0);
+  digitalWrite(AIN1, HIGH); digitalWrite(AIN2, HIGH); writeSpeed(PWMA, 0);
+  digitalWrite(BIN1, HIGH); digitalWrite(BIN2, HIGH); writeSpeed(PWMB, 0);
 }
 
 void setup() {
   Serial.begin(115200);
 
-  int pins[] = {PWMA, AIN1, AIN2, PWMB, BIN1, BIN2, STBY};
+  int pins[] = {AIN1, AIN2, BIN1, BIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
+
+#if defined(ARDUINO_ARCH_STM32F1)
+  // Roger Clark core: OUTPUT mode disconnects the timer, so PWM pins need PWM mode.
+  pinMode(PWMA, PWM);
+  pinMode(PWMB, PWM);
+#else
+  pinMode(PWMA, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+#endif
 
   // 20 kHz PWM is above hearing range, so the motors don't whine.
   // (TB6612FNG supports up to 100 kHz.) Only the official STMicroelectronics
