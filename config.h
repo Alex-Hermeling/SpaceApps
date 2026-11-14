@@ -2,11 +2,8 @@
 #pragma once
 #include <Arduino.h>
 
-// ---------------- Mode ----------------
-// 0 = mission (state machine)
-// 1 = motor test loop: forward / brake / reverse / coast, repeating
-// 2 = driver diagnose: full speed forward 5 s with PWM bypassed
-#define TEST_MODE 0
+// Motor testing lives in the separate MotorTest/ sketch.
+// If you change motor pins here, change them in MotorTest/MotorTest.ino too.
 
 // ---------------- Motor pins (TB6612FNG) ----------------
 // Avoided pins: PA9/PA10 (serial upload), PA11/PA12 (USB),
@@ -51,4 +48,3 @@ const unsigned long LOG_EVERY_MS     = 500;
 
 // ---------------- Speeds (0..255) ----------------
 const int DRIVE_SLOW_SPEED = 100;  // slow, to protect the solar panel
-const int TEST_SPEED       = 100;  // TEST_MODE 1

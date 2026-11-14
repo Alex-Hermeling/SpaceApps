@@ -12,8 +12,8 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 | File | Contents |
 |---|---|
 | `SpaceApps.ino` | Mission state machine |
-| `config.h` | Pins, thresholds, timings, `TEST_MODE`, `IR_MODE` |
-| `motors.h` | TB6612FNG motor control and motor tests |
+| `config.h` | Pins, thresholds, timings, `IR_MODE` |
+| `motors.h` | TB6612FNG motor control |
 | `sensors.h` | Light and IR door sensor |
 
 ## Wiring
@@ -55,9 +55,16 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 | STABILIZE | Stands still 3 s |
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
-## Test modes (`TEST_MODE` in config.h)
-- `0`: mission
-- `1`: motor test loop (forward / brake / reverse / coast)
-- `2`: driver diagnose (full speed 5 s, PWM bypassed)
+## Motor test (`MotorTest/MotorTest.ino`)
+A separate sketch to test the motors on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
 
-Serial Monitor: 115200 baud.
+| Key | Action | Key | Action |
+|---|---|---|---|
+| `f` | Both forward | `r` | Both reverse |
+| `a` | Motor A forward | `z` | Motor A reverse |
+| `b` | Motor B forward | `n` | Motor B reverse |
+| `s` | Brake | `c` | Coast |
+| `+` | Faster | `-` | Slower |
+| `t` | Auto test sequence | `d` | Diagnose (full speed, PWM bypassed) |
+
+Its pins are copied from `config.h`, so keep them the same if you change them.

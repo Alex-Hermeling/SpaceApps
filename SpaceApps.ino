@@ -165,12 +165,5 @@ void runMission() {
 }
 
 void loop() {
-#if TEST_MODE == 1
-  motorTestLoop();
-#elif TEST_MODE == 2
-  static bool done = false;
-  if (!done) { delay(3000); motorDiagnose(); done = true; }
-#else
   runMission();
-#endif
 }

@@ -56,27 +56,3 @@ inline void motorsInit() {
   stopMotors();
   digitalWrite(STBY, HIGH);  // wake the driver
 }
-
-// TEST_MODE 1: forward / brake / reverse / coast (blocking, test only)
-inline void motorTestLoop() {
-  Serial.println("Forward"); driveForward(TEST_SPEED);  delay(2000);
-  Serial.println("Brake");   brakeAll();                delay(1000);
-  Serial.println("Reverse"); driveForward(-TEST_SPEED); delay(2000);
-  Serial.println("Coast");   stopMotors();              delay(2000);
-}
-
-// TEST_MODE 2: full speed forward 5 s with PWM bypassed (blocking, test only).
-// Spins -> wiring/driver OK, PWM is the problem.
-// Doesn't spin -> check power, ground, STBY, VCC, motor wires.
-inline void motorDiagnose() {
-  Serial.println("DIAGNOSE: full speed forward 5 s, PWM bypassed");
-  pinMode(PWMA, OUTPUT); pinMode(PWMB, OUTPUT);
-  digitalWrite(STBY, HIGH);
-  digitalWrite(AIN1, HIGH); digitalWrite(AIN2, LOW);
-  digitalWrite(BIN1, HIGH); digitalWrite(BIN2, LOW);
-  digitalWrite(PWMA, HIGH); digitalWrite(PWMB, HIGH);
-  delay(5000);
-  digitalWrite(PWMA, LOW);  digitalWrite(PWMB, LOW);
-  digitalWrite(AIN1, LOW);  digitalWrite(BIN1, LOW);
-  Serial.println("DIAGNOSE done - press RESET to repeat");
-}
