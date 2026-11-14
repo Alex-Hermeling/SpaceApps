@@ -2,8 +2,8 @@
 #pragma once
 #include <Arduino.h>
 
-// Motor testing lives in the separate MotorTest/ sketch.
-// If you change motor pins here, change them in MotorTest/MotorTest.ino too.
+// Hardware testing lives in the separate HardwareTest/ sketch.
+// If you change pins here, change them in HardwareTest/HardwareTest.ino too.
 
 // ---------------- Motor pins (TB6612FNG) ----------------
 // Avoided pins: PA9/PA10 (serial upload), PA11/PA12 (USB),

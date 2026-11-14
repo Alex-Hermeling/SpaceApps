@@ -1,4 +1,4 @@
-// MotorTest - standalone motor + servo test for SpaceApps.
+// HardwareTest - standalone test for all SpaceApps hardware: motors, servo, IR sensor, light sensor.
 // Open this file on its own in the Arduino IDE and upload it.
 // Serial Monitor: 115200 baud, line ending "Newline".
 //
@@ -130,7 +130,7 @@ void printLight() {
 
 void printHelp() {
   Serial.println();
-  Serial.println("=== MotorTest ===");
+  Serial.println("=== SpaceApps HardwareTest ===");
   Serial.println("Motors:");
   Serial.println("  f  both forward       r  both reverse");
   Serial.println("  a  motor A forward    z  motor A reverse");
