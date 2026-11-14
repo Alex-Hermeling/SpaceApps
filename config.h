@@ -20,10 +20,14 @@ const int STBY = PA8;   // HIGH = driver enabled
 // LDR divider: 3.3V -> LDR -> PA4 -> 8k -> GND  (brighter = higher value)
 const int LDR_PIN = PA4;
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
-//   OUT: LOW when something reflective is close (module's LED lights).
+//   OUT: level set by IR_CLOSE_LEVEL when something reflective is close.
 //   Set the trigger distance with the module's potentiometer.
 // Short range: reliable up to ~1-2 cm, best on a white/light surface.
 const int IR_PIN = PA5;
+// Level OUT reads when the door is in front of the sensor.
+// This module reads HIGH when close (serial log: ir=1 with the door shut in the dark box).
+// Most TCRT5000 boards are LOW - flip this if a different module is used.
+const int IR_CLOSE_LEVEL = HIGH;
 
 // ---------------- Servo (unfurl) ----------------
 // Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.

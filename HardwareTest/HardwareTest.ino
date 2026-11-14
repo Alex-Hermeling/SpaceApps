@@ -14,7 +14,8 @@ Servo servo;
 int servoAngle = 90;
 
 // ---- TCRT5000 IR sensor (same as config.h) ----
-const int IR_PIN = PA5;     // OUT: LOW = something close
+const int IR_PIN = PA5;
+const int IR_CLOSE_LEVEL = HIGH;  // level OUT reads when the door is close (this module: HIGH)
 bool irWatch = false;       // live IR readout on/off
 unsigned long lastIrPrint = 0;
 
@@ -114,7 +115,7 @@ void servoSweep() {
 void printIr() {
   int d = digitalRead(IR_PIN);
   Serial.print("IR  OUT="); Serial.print(d);
-  Serial.println(d == LOW ? "   CLOSE (door)" : "   far");
+  Serial.println(d == IR_CLOSE_LEVEL ? "   CLOSE (door)" : "   far");
 }
 
 // ---------------- Light sensor ----------------

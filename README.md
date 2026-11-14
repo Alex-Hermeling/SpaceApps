@@ -38,7 +38,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 |---|---|---|
 | LDR | 3.3 → LDR → **PA4** → 8 kΩ → G | Brighter = higher reading |
 | TCRT5000 VCC / GND | 3.3 / G | |
-| TCRT5000 OUT | **PA5** | LOW when the door is close; set range with the module's potentiometer |
+| TCRT5000 OUT | **PA5** | HIGH when the door is close on this module (`IR_CLOSE_LEVEL` in config.h); set range with the module's potentiometer |
 
 The TCRT5000 only sees about 1–2 cm reliably. Mount it close to the door, and put white tape on the door where the sensor points.
 

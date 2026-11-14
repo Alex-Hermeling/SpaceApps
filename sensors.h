@@ -17,8 +17,8 @@ inline int readLight() {
   return sum / 16;
 }
 
-// TCRT5000 output: LOW = something close.
+// TCRT5000 output: IR_CLOSE_LEVEL = something close.
 inline int readIr() { return digitalRead(IR_PIN); }
 
 // True when the (closed) door is in front of the sensor.
-inline bool doorClosed() { return readIr() == LOW; }
+inline bool doorClosed() { return readIr() == IR_CLOSE_LEVEL; }
