@@ -1,79 +1,176 @@
 // SpaceApps
-// Two DC motors driven by a TB6612FNG dual H-bridge.
-// Board: STM32F103C8T6 "Blue Pill" (STM32duino core). 3.3V logic.
-// Avoided pins: PA9/PA10 (serial upload), PA11/PA12 (USB),
-// PA13/PA14 (SWD / ST-Link), PC13 (onboard LED), PB2 (BOOT1).
+// STM32F103C8T6 "Blue Pill" + TB6612FNG + 2 DC motors, LDR light sensor, IR door sensor.
+//
+// Mission (everything before unfurling):
+//   BOOT -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT -> STABILIZE -> READY_TO_UNFURL
+//
+// Pins, thresholds and timings: config.h
+// Motor control: motors.h    Sensors: sensors.h
 
-// ---- Motor A ----
-const int PWMA = PA0;   // speed (PWM, TIM2_CH1)
-const int AIN1 = PB12;  // direction
-const int AIN2 = PB13;  // direction
+#include "config.h"
+#include "motors.h"
+#include "sensors.h"
 
-// ---- Motor B ----
-const int PWMB = PA1;   // speed (PWM, TIM2_CH2)
-const int BIN1 = PB14;  // direction
-const int BIN2 = PB15;  // direction
+enum State {
+  BOOT,
+  WAIT_IN_BOX,
+  WAIT_DOOR_OPEN,
+  DOOR_SETTLE,
+  DRIVE_OUT,
+  STABILIZE,
+  READY_TO_UNFURL
+};
 
-// ---- Standby ----
-const int STBY = PA8;   // HIGH = driver enabled, LOW = driver asleep
+const char* STATE_NAMES[] = {
+  "BOOT", "WAIT_IN_BOX", "WAIT_DOOR_OPEN", "DOOR_SETTLE",
+  "DRIVE_OUT", "STABILIZE", "READY_TO_UNFURL"
+};
 
-// speed: -255 (full reverse) .. 0 (stop) .. 255 (full forward)
-void setMotor(int pwmPin, int in1, int in2, int speed) {
-  speed = constrain(speed, -255, 255);
-  if (speed > 0) {
-    digitalWrite(in1, HIGH);
-    digitalWrite(in2, LOW);
-  } else if (speed < 0) {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-  } else {
-    // Both LOW = coast. (Both HIGH would be a short brake.)
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, LOW);
-  }
-  analogWrite(pwmPin, abs(speed));
+State state = BOOT;
+unsigned long stateStart = 0;   // millis() when the current state began
+unsigned long condSince  = 0;   // millis() when the current condition became true (0 = not true)
+unsigned long lastLog    = 0;
+
+// Light readings logged during the mission
+int lightOutside   = 0;
+int lightInside    = 0;
+int lightThreshold = 0;   // halfway between inside and outside
+
+// BOOT averaging
+unsigned long bootSum   = 0;
+unsigned long bootCount = 0;
+unsigned long lastSample = 0;
+
+// DRIVE_OUT: when light first said "outside" (0 = not yet)
+unsigned long outsideAt = 0;
+
+void enterState(State s) {
+  state = s;
+  stateStart = millis();
+  condSince = 0;
+  Serial.print("\n>>> ");
+  Serial.println(STATE_NAMES[s]);
 }
 
-void motorA(int speed) { setMotor(PWMA, AIN1, AIN2, speed); }
-void motorB(int speed) { setMotor(PWMB, BIN1, BIN2, speed); }
+// True once `cond` has been true continuously for `ms`.
+bool heldFor(bool cond, unsigned long ms) {
+  if (!cond) { condSince = 0; return false; }
+  unsigned long now = millis();
+  if (condSince == 0) condSince = now ? now : 1;
+  return now - condSince >= ms;
+}
 
-void brakeAll() {
-  digitalWrite(AIN1, HIGH); digitalWrite(AIN2, HIGH); analogWrite(PWMA, 0);
-  digitalWrite(BIN1, HIGH); digitalWrite(BIN2, HIGH); analogWrite(PWMB, 0);
+unsigned long inState() { return millis() - stateStart; }
+
+void logSensors() {
+  if (millis() - lastLog < LOG_EVERY_MS) return;
+  lastLog = millis();
+  Serial.print(STATE_NAMES[state]);
+  Serial.print("  light=");  Serial.print(readLight());
+  Serial.print("  ir=");     Serial.print(readIrRaw());
+  Serial.print("  door=");   Serial.println(doorClosed() ? "closed" : "open");
 }
 
 void setup() {
   Serial.begin(115200);
-
-  int pins[] = {PWMA, AIN1, AIN2, PWMB, BIN1, BIN2, STBY};
-  for (int p : pins) pinMode(p, OUTPUT);
-
-  // 20 kHz PWM is above hearing range, so the motors don't whine.
-  // (TB6612FNG supports up to 100 kHz.)
-  analogWriteFrequency(20000);
-
-  motorA(0);
-  motorB(0);
-  digitalWrite(STBY, HIGH);  // wake the driver
-
-  Serial.println("SpaceApps: TB6612FNG ready");
+  delay(1500);  // give the Serial Monitor time to connect
+  motorsInit();
+  sensorsInit();
+  Serial.println("SpaceApps starting");
+  enterState(BOOT);
 }
 
-// Simple test: each motor forward, then reverse, then stop.
+void runMission() {
+  switch (state) {
+
+    case BOOT:
+      // Average the outside light (rover boots outside the box).
+      if (millis() - lastSample >= 10) {
+        lastSample = millis();
+        bootSum += readLight();
+        bootCount++;
+      }
+      if (inState() >= LIGHT_SAMPLE_MS) {
+        lightOutside = bootSum / bootCount;
+        Serial.print("Logged light OUTSIDE = "); Serial.println(lightOutside);
+        enterState(WAIT_IN_BOX);
+      }
+      break;
+
+    case WAIT_IN_BOX: {
+      // Know we're in the box: door close to the IR sensor AND dark compared to outside.
+      bool dark = readLight() < lightOutside * IN_BOX_FRACTION;
+      if (heldFor(doorClosed() && dark, STABLE_MS)) {
+        lightInside = readLight();
+        lightThreshold = (lightInside + lightOutside) / 2;
+        Serial.print("Logged light INSIDE = ");  Serial.println(lightInside);
+        Serial.print("Outside threshold = ");    Serial.println(lightThreshold);
+        enterState(WAIT_DOOR_OPEN);
+      }
+      break;
+    }
+
+    case WAIT_DOOR_OPEN:
+      // Door opening: IR no longer sees the door within ~5 cm.
+      if (heldFor(!doorClosed(), DOOR_DEBOUNCE_MS)) {
+        Serial.println("Door opened");
+        enterState(DOOR_SETTLE);
+      }
+      break;
+
+    case DOOR_SETTLE:
+      // Internal timer: let the door finish opening.
+      if (inState() >= DOOR_SETTLE_MS) {
+        outsideAt = 0;
+        driveForward(DRIVE_SLOW_SPEED);
+        enterState(DRIVE_OUT);
+      }
+      break;
+
+    case DRIVE_OUT:
+      // Drive slowly to protect the solar panel.
+      driveForward(DRIVE_SLOW_SPEED);
+
+      if (outsideAt == 0 && heldFor(readLight() > lightThreshold, STABLE_MS)) {
+        outsideAt = millis();
+        Serial.println("Light says OUTSIDE - clearing the box");
+      }
+      if (outsideAt != 0 && millis() - outsideAt >= CLEAR_EXTRA_MS) {
+        brakeAll();
+        Serial.println("Out of the box");
+        enterState(STABILIZE);
+      } else if (inState() >= DRIVE_MAX_MS) {
+        brakeAll();
+        Serial.println("Drive TIMEOUT - stopping for safety");
+        enterState(STABILIZE);
+      }
+      break;
+
+    case STABILIZE:
+      // Stand still before unfurling.
+      brakeAll();
+      if (inState() >= STABLE_WAIT_MS) {
+        stopMotors();
+        Serial.println("READY TO UNFURL");
+        enterState(READY_TO_UNFURL);
+      }
+      break;
+
+    case READY_TO_UNFURL:
+      // TODO: unfurl panels (motors/servo), then sandstorm -> furl loop.
+      break;
+  }
+
+  if (state != READY_TO_UNFURL) logSensors();
+}
+
 void loop() {
-  Serial.println("Forward");
-  motorA(100); motorB(100);
-  delay(2000);
-
-  Serial.println("Brake");
-  brakeAll();
-  delay(1000);
-
-  Serial.println("Reverse");
-  motorA(-100); motorB(-100);
-  delay(2000);
-
-  Serial.println("Coast");
-  motorA(0); motorB(0);
-  delay(2000);
+#if TEST_MODE == 1
+  motorTestLoop();
+#elif TEST_MODE == 2
+  static bool done = false;
+  if (!done) { delay(3000); motorDiagnose(); done = true; }
+#else
+  runMission();
+#endif
 }
