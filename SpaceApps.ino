@@ -1,29 +1,37 @@
 // SpaceApps
-// STM32F103C8T6 "Blue Pill" + TB6612FNG + 2 DC motors, LDR light sensor, IR door sensor.
+// STM32F103C8T6 "Blue Pill" + TB6612FNG + 2 DC motors, LDR light sensor, IR door sensor, servo.
 //
 // Mission (everything before unfurling):
-//   BOOT -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT -> STABILIZE -> READY_TO_UNFURL
+//   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
+//        -> STABILIZE -> PARK_SERVO -> READY_TO_UNFURL
+//
+// Servo rule: the program always ends with the servo at 90 (SERVO_PARK_ANGLE),
+// so at power-up it is assumed to be at 90. It goes to 0 before entering the box.
 //
 // Pins, thresholds and timings: config.h
-// Motor control: motors.h    Sensors: sensors.h
+// Motor control: motors.h    Sensors: sensors.h    Servo: panel_servo.h
 
+#include <Servo.h>
 #include "config.h"
 #include "motors.h"
 #include "sensors.h"
+#include "panel_servo.h"
 
 enum State {
   BOOT,
+  STOW_SERVO,
   WAIT_IN_BOX,
   WAIT_DOOR_OPEN,
   DOOR_SETTLE,
   DRIVE_OUT,
   STABILIZE,
+  PARK_SERVO,
   READY_TO_UNFURL
 };
 
 const char* STATE_NAMES[] = {
-  "BOOT", "WAIT_IN_BOX", "WAIT_DOOR_OPEN", "DOOR_SETTLE",
-  "DRIVE_OUT", "STABILIZE", "READY_TO_UNFURL"
+  "BOOT", "STOW_SERVO", "WAIT_IN_BOX", "WAIT_DOOR_OPEN", "DOOR_SETTLE",
+  "DRIVE_OUT", "STABILIZE", "PARK_SERVO", "READY_TO_UNFURL"
 };
 
 State state = BOOT;
@@ -68,7 +76,8 @@ void logSensors() {
   Serial.print(STATE_NAMES[state]);
   Serial.print("  light=");  Serial.print(readLight());
   Serial.print("  ir=");     Serial.print(readIr());
-  Serial.print("  door=");   Serial.println(doorClosed() ? "closed" : "open");
+  Serial.print("  door=");   Serial.print(doorClosed() ? "closed" : "open");
+  Serial.print("  servo=");  Serial.println(servoAngle);
 }
 
 void setup() {
@@ -76,6 +85,7 @@ void setup() {
   delay(1500);  // give the Serial Monitor time to connect
   motorsInit();
   sensorsInit();
+  servoInit();  // assumes the servo is at 90 (where the last run left it)
   Serial.println("SpaceApps starting");
   enterState(BOOT);
 }
@@ -93,6 +103,15 @@ void runMission() {
       if (inState() >= LIGHT_SAMPLE_MS) {
         lightOutside = bootSum / bootCount;
         Serial.print("Logged light OUTSIDE = "); Serial.println(lightOutside);
+        servoMoveTo(SERVO_STOW_ANGLE);
+        enterState(STOW_SERVO);
+      }
+      break;
+
+    case STOW_SERVO:
+      // Fold the servo to 0 before going in the box.
+      if (servoAtTarget()) {
+        Serial.println("Servo stowed at 0 - put the rover in the box");
         enterState(WAIT_IN_BOX);
       }
       break;
@@ -151,15 +170,27 @@ void runMission() {
       brakeAll();
       if (inState() >= STABLE_WAIT_MS) {
         stopMotors();
+        servoMoveTo(SERVO_PARK_ANGLE);
+        enterState(PARK_SERVO);
+      }
+      break;
+
+    case PARK_SERVO:
+      // Always leave the servo at 90 at the end, so the next power-up can assume it.
+      if (servoAtTarget()) {
+        Serial.println("Servo parked at 90");
         Serial.println("READY TO UNFURL");
         enterState(READY_TO_UNFURL);
       }
       break;
 
     case READY_TO_UNFURL:
-      // TODO: unfurl panels (motors/servo), then sandstorm -> furl loop.
+      // TODO: unfurl panels, then sandstorm -> furl loop.
+      // Any future code must also finish with the servo back at SERVO_PARK_ANGLE.
       break;
   }
+
+  servoUpdate();  // step the servo towards its target
 
   if (state != READY_TO_UNFURL) logSensors();
 }

@@ -158,6 +158,7 @@ void printHelp() {
   Serial.println("  ]  +10 deg            [  -10 deg");
   Serial.println("  w  sweep 0-180-0      v  release (go limp)");
   Serial.println("  ,  servo slower       .  servo faster");
+  Serial.println("  x  park servo at 90 (do this before powering off)");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
   Serial.println("Light sensor (LDR PA4):");
@@ -188,7 +189,7 @@ void setup() {
   motorA(0); motorB(0);
   digitalWrite(STBY, HIGH);
 
-  // Centre the servo. Its real position is unknown at power-up, so this first move is at full speed.
+  // Assume the servo is at 90: every program leaves it there before ending.
   servo.attach(SERVO_PIN);
   servo.write(servoAngle);
   printHelp();
@@ -220,6 +221,7 @@ void loop() {
     case '[': servoTo(servoAngle - 10); break;
     case 'w': servoSweep(); break;
     case 'v': servo.detach(); Serial.println("Servo released"); break;
+    case 'x': servoTo(90); Serial.println("Servo parked at 90 - safe to power off"); break;
     case ',': servoStepMs = (servoStepMs == 0) ? 5 : min(servoStepMs * 2, 200); printServoSpeed(); break;
     case '.': servoStepMs = (servoStepMs <= 5) ? 0 : servoStepMs / 2;           printServoSpeed(); break;
     case 'i': irWatch = !irWatch; Serial.println(irWatch ? "IR live ON" : "IR live OFF"); break;

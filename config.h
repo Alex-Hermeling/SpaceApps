@@ -33,6 +33,12 @@ const int IR_CLOSE_LEVEL = HIGH;
 // Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.
 const int SERVO_PIN = PA6;  // TIM3_CH1
 
+// Servo convention: the program always ENDS with the servo at SERVO_PARK_ANGLE,
+// so at power-up we ASSUME it is there (its real position can't be read).
+const int SERVO_PARK_ANGLE = 90;  // start + end position
+const int SERVO_STOW_ANGLE = 0;   // position while in the box
+const unsigned long SERVO_STEP_MS = 20;  // ms per degree: higher = slower (90 deg = 1.8 s)
+
 // ---------------- Thresholds ----------------
 const float IN_BOX_FRACTION = 0.5;  // in box when light < outside light * this
 
