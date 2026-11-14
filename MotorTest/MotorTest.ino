@@ -1,10 +1,19 @@
-// MotorTest - standalone motor test for SpaceApps.
+// MotorTest - standalone motor + servo test for SpaceApps.
 // Open this file on its own in the Arduino IDE and upload it.
-// Serial Monitor: 115200 baud, line ending "No line ending" or "Newline".
+// Serial Monitor: 115200 baud, line ending "Newline".
 //
 // Pins MUST match ../config.h (Arduino can't include files from a parent folder).
 
-// ---- Pins (same as config.h) ----
+#include <Servo.h>
+
+// ---- Servo ----
+// Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.
+// PA6 = TIM3_CH1.
+const int SERVO_PIN = PA6;
+Servo servo;
+int servoAngle = 90;
+
+// ---- Motor pins (same as config.h) ----
 const int PWMA = PA0;
 const int AIN1 = PB12;
 const int AIN2 = PB13;
@@ -74,9 +83,26 @@ void diagnose() {
   Serial.println("  No spin?  -> check VM, GND, STBY, VCC, motor wires");
 }
 
+// ---------------- Servo ----------------
+void servoTo(int angle) {
+  servoAngle = constrain(angle, 0, 180);
+  if (!servo.attached()) servo.attach(SERVO_PIN);
+  servo.write(servoAngle);
+  Serial.print("Servo -> "); Serial.print(servoAngle); Serial.println(" deg");
+}
+
+void servoSweep() {
+  Serial.println("Servo sweep 0 -> 180 -> 0");
+  if (!servo.attached()) servo.attach(SERVO_PIN);
+  for (int a = 0; a <= 180; a += 5)  { servo.write(a); delay(30); }
+  for (int a = 180; a >= 0; a -= 5)  { servo.write(a); delay(30); }
+  servoTo(90);
+}
+
 void printHelp() {
   Serial.println();
   Serial.println("=== MotorTest ===");
+  Serial.println("Motors:");
   Serial.println("  f  both forward       r  both reverse");
   Serial.println("  a  motor A forward    z  motor A reverse");
   Serial.println("  b  motor B forward    n  motor B reverse");
@@ -84,8 +110,13 @@ void printHelp() {
   Serial.println("  +  faster             -  slower");
   Serial.println("  t  auto test sequence");
   Serial.println("  d  diagnose (full speed, PWM bypassed)");
+  Serial.println("Servo (PA6):");
+  Serial.println("  0..180  type an angle + Enter, e.g. 45");
+  Serial.println("  ]  +10 deg            [  -10 deg");
+  Serial.println("  w  sweep 0-180-0      v  release (go limp)");
   Serial.println("  h  this help");
-  Serial.print("Speed: "); Serial.println(speed);
+  Serial.print("Speed: "); Serial.print(speed);
+  Serial.print("   Servo: "); Serial.print(servoAngle); Serial.println(" deg");
 }
 
 void setup() {
@@ -102,15 +133,28 @@ void setup() {
 
   motorA(0); motorB(0);
   digitalWrite(STBY, HIGH);
+
+  servoTo(90);  // centre the servo
   printHelp();
 }
 
 void loop() {
   if (!Serial.available()) return;
+
+  // A number = servo angle
+  if (isDigit(Serial.peek())) {
+    servoTo(Serial.parseInt());
+    return;
+  }
+
   char cmd = Serial.read();
   if (cmd == '\n' || cmd == '\r' || cmd == ' ') return;
 
   switch (cmd) {
+    case ']': servoTo(servoAngle + 10); break;
+    case '[': servoTo(servoAngle - 10); break;
+    case 'w': servoSweep(); break;
+    case 'v': servo.detach(); Serial.println("Servo released"); break;
     case 'f': Serial.println("Both forward");    motorA(speed);  motorB(speed);  break;
     case 'r': Serial.println("Both reverse");    motorA(-speed); motorB(-speed); break;
     case 'a': Serial.println("Motor A forward"); motorA(speed);  break;

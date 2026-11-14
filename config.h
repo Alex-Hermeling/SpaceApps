@@ -22,6 +22,10 @@ const int LDR_PIN = PA4;
 // IR sensor output, sensor powered from 3.3V
 const int IR_PIN  = PA5;
 
+// ---------------- Servo (unfurl) ----------------
+// Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.
+const int SERVO_PIN = PA6;  // TIM3_CH1
+
 // IR sensor type (part unknown for now):
 //   IR_DIGITAL - obstacle module (e.g. FC-51), OUT goes LOW when something is close.
 //                Set the ~5 cm trigger distance with the module's potentiometer.

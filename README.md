@@ -40,6 +40,13 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 | IR sensor VCC / GND | 3.3 / G | |
 | IR sensor OUT | **PA5** | Set `IR_MODE` in config.h (digital module or analog) |
 
+### Servo
+| Servo wire | Connect to | Notes |
+|---|---|---|
+| Orange / yellow (signal) | **PA6** | Timer 3; must not share timer 2 with the motor PWM pins |
+| Red (+) | Blue Pill **5V** (small SG90 on USB) or 4× AA + | Bigger servos: use the battery or a 5V regulator |
+| Brown / black (−) | **G** | Common ground |
+
 Pins kept free: PA9/PA10 (serial upload), PA11/PA12 (USB), PA13/PA14 (SWD), PC13 (LED), PB2 (BOOT1).
 
 Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
@@ -56,7 +63,7 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
 ## Motor test (`MotorTest/MotorTest.ino`)
-A separate sketch to test the motors on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
+A separate sketch to test the motors and the servo on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
 
 | Key | Action | Key | Action |
 |---|---|---|---|
@@ -66,5 +73,8 @@ A separate sketch to test the motors on their own. Open it in the Arduino IDE, u
 | `s` | Brake | `c` | Coast |
 | `+` | Faster | `-` | Slower |
 | `t` | Auto test sequence | `d` | Diagnose (full speed, PWM bypassed) |
+| `0`–`180` + Enter | Servo to that angle | `w` | Servo sweep 0–180–0 |
+| `]` | Servo +10° | `[` | Servo −10° |
+| `v` | Release servo (go limp) | `h` | Help |
 
 Its pins are copied from `config.h`, so keep them the same if you change them.
