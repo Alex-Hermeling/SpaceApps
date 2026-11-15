@@ -1,11 +1,12 @@
 // SpaceApps
-// STM32F103C8T6 "Blue Pill" + TB6612FNG + 2 DC motors, LDR light sensor, IR door sensor, servo.
+// STM32F103C8T6 "Blue Pill" + 2x TB6612FNG + 3 DC motors, 4 LDR light sensors, IR door sensor, 2 servos.
+// Pins: pinout.md / config.h. Motor C is set up but not used by the mission yet.
 //
 // Mission (everything before unfurling):
 //   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
 //        -> STABILIZE -> PARK_SERVO -> READY_TO_UNFURL
 //
-// Servo rule: the program always ends with the servo at SERVO_PARK_ANGLE (0),
+// Servo rule: the program always ends with both servos at SERVO_PARK_ANGLE (0),
 // so at power-up it is assumed to be there. STOW_SERVO / PARK_SERVO make sure it is
 // at SERVO_STOW_ANGLE before the box and back at SERVO_PARK_ANGLE at the end.
 //
@@ -76,6 +77,12 @@ void logSensors() {
   lastLog = millis();
   Serial.print(STATE_NAMES[state]);
   Serial.print("  light=");  Serial.print(readLight());
+  Serial.print(" [");
+  for (int i = 0; i < NUM_LDR; i++) {
+    if (i) Serial.print(' ');
+    Serial.print(readLightSensor(i));
+  }
+  Serial.print(']');
   Serial.print("  ir=");     Serial.print(readIr());
   Serial.print("  door=");   Serial.print(doorClosed() ? "closed" : "open");
   Serial.print("  servo=");  Serial.println(servoAngle);

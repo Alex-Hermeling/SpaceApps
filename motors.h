@@ -1,4 +1,4 @@
-// motors.h - TB6612FNG dual DC motor control.
+// motors.h - TB6612FNG motor control: motors A + B (driver #1, drive wheels), motor C (driver #2).
 // Works on both the official STMicroelectronics core (ARDUINO_ARCH_STM32)
 // and the Roger Clark core (ARDUINO_ARCH_STM32F1).
 #pragma once
@@ -28,25 +28,29 @@ inline void setMotor(int pwmPin, int in1, int in2, int speed) {
 
 inline void motorA(int speed) { setMotor(PWMA, AIN1, AIN2, speed); }
 inline void motorB(int speed) { setMotor(PWMB, BIN1, BIN2, speed); }
+inline void motorC(int speed) { setMotor(PWMC, CIN1, CIN2, speed); }
 
-inline void driveForward(int speed) { motorA(speed); motorB(speed); }
-inline void stopMotors()            { motorA(0);     motorB(0); }   // coast
+inline void driveForward(int speed) { motorA(speed); motorB(speed); }   // drive wheels A + B
+inline void stopMotors()            { motorA(0); motorB(0); motorC(0); } // coast all
 
 inline void brakeAll() {
   digitalWrite(AIN1, HIGH); digitalWrite(AIN2, HIGH); writeSpeed(PWMA, 0);
   digitalWrite(BIN1, HIGH); digitalWrite(BIN2, HIGH); writeSpeed(PWMB, 0);
+  digitalWrite(CIN1, HIGH); digitalWrite(CIN2, HIGH); writeSpeed(PWMC, 0);
 }
 
 inline void motorsInit() {
-  int pins[] = {AIN1, AIN2, BIN1, BIN2, STBY};
+  int pins[] = {AIN1, AIN2, BIN1, BIN2, CIN1, CIN2, STBY};
   for (int p : pins) pinMode(p, OUTPUT);
 
 #if defined(ARDUINO_ARCH_STM32F1)
   pinMode(PWMA, PWM);  // Roger Clark core: OUTPUT would disconnect the timer
   pinMode(PWMB, PWM);
+  pinMode(PWMC, PWM);
 #else
   pinMode(PWMA, OUTPUT);
   pinMode(PWMB, OUTPUT);
+  pinMode(PWMC, OUTPUT);
 #endif
 
 #if defined(ARDUINO_ARCH_STM32)
@@ -54,5 +58,5 @@ inline void motorsInit() {
 #endif
 
   stopMotors();
-  digitalWrite(STBY, HIGH);  // wake the driver
+  digitalWrite(STBY, HIGH);  // wake both drivers
 }

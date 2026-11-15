@@ -2,23 +2,29 @@
 #pragma once
 #include <Arduino.h>
 
-// Hardware testing lives in the separate HardwareTest/ sketch.
-// If you change pins here, change them in HardwareTest/HardwareTest.ino too.
+// Pins follow pinout.md (tested with HardwareTest).
+// If you change pins here, change them in HardwareTest/HardwareTest.ino and pinout.md too.
 
-// ---------------- Motor pins (TB6612FNG) ----------------
+// ---------------- Motor driver #1 (TB6612FNG, 2 channels) ----------------
 // Avoided pins: PA9/PA10 (serial upload), PA11/PA12 (USB),
 // PA13/PA14 (SWD / ST-Link), PC13 (onboard LED), PB2 (BOOT1).
-const int PWMA = PA0;   // speed (PWM, TIM2_CH1)
-const int AIN1 = PB12;  // direction
-const int AIN2 = PB13;  // direction
-const int PWMB = PA1;   // speed (PWM, TIM2_CH2)
-const int BIN1 = PB14;  // direction
-const int BIN2 = PB15;  // direction
-const int STBY = PA8;   // HIGH = driver enabled
+const int PWMA = PA0;   // motor A speed (PWM, timer 2)
+const int AIN1 = PB15;  // motor A direction
+const int AIN2 = PB14;  // motor A direction
+const int PWMB = PA1;   // motor B speed (PWM, timer 2)
+const int BIN1 = PB6;   // motor B direction
+const int BIN2 = PB7;   // motor B direction
+const int STBY = PB5;   // HIGH = enabled, shared by both drivers
+
+// ---------------- Motor driver #2 (TB6612FNG, channel A only) = motor C ----------------
+const int PWMC = PA8;   // motor C speed (PWM, timer 1)
+const int CIN1 = PB12;  // motor C direction
+const int CIN2 = PB13;  // motor C direction
 
 // ---------------- Sensor pins ----------------
-// LDR divider: 3.3V -> LDR -> PA4 -> 8k -> GND  (brighter = higher value)
-const int LDR_PIN = PA4;
+// 4 light sensors: 3.3V -> LDR -> pin -> 8k -> GND  (brighter = higher value)
+const int NUM_LDR = 4;
+const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB0, PB1};  // L1..L4
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
 //   OUT: level set by IR_CLOSE_LEVEL when something reflective is close.
 //   Set the trigger distance with the module's potentiometer.
@@ -29,11 +35,12 @@ const int IR_PIN = PA5;
 // Most TCRT5000 boards are LOW - flip this if a different module is used.
 const int IR_CLOSE_LEVEL = HIGH;
 
-// ---------------- Servo (unfurl) ----------------
-// Must NOT be on timer 2 (PA0/PA1 motor PWM): the Servo library takes over the whole timer.
-const int SERVO_PIN = PA6;  // TIM3_CH1
+// ---------------- Servos (unfurl) ----------------
+// Both on timer 3. The Servo library takes over the whole timer, so no motor PWM may use it.
+const int NUM_SERVOS = 2;
+const int SERVO_PINS[NUM_SERVOS] = {PA6, PA7};
 
-// Servo convention: the program always ENDS with the servo at SERVO_PARK_ANGLE,
+// Servo convention: the program always ENDS with the servos at SERVO_PARK_ANGLE,
 // so at power-up we ASSUME it is there (its real position can't be read).
 const int SERVO_PARK_ANGLE = 0;   // start + end position (boot at 0)
 const int SERVO_STOW_ANGLE = 0;   // position while in the box

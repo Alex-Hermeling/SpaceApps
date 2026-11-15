@@ -1,6 +1,7 @@
 # SpaceApps pinout
 
 Board: STM32F103C8T6 "Blue Pill" (Roger Clark STM32 core).
+Used by `config.h` (main sketch) and `HardwareTest/HardwareTest.ino`. Motors A and B tested working with this pinout.
 On the Blue Pill, **G** = GND.
 
 ## Motor driver #1 (TB6612FNG, 2 channels)
