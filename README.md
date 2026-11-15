@@ -1,6 +1,6 @@
 # SpaceApps
 
-Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives slowly out, stops, and unfurls its solar panels (servos 0° → 180°). When a sandstorm comes (light goes dark for 15 s) it furls (180° → 0°), and unfurls again once the light is back for 10 s.
+Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives out (full speed, 2.5 s), stops, and unfurls its solar panels (servos 0° → 180°). When a sandstorm comes (light goes dark for 15 s) it furls (180° → 0°), and unfurls again once the light is back for 10 s.
 
 ## Hardware
 - STM32F103C8T6 Blue Pill (Roger Clark STM32 core)
@@ -30,7 +30,7 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 | WAIT_IN_BOX | Door within ~5 cm **and** light < 50% of outside, for 2 s; inside light logged |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
 | DOOR_SETTLE | 5 s timer |
-| DRIVE_OUT | Drives slowly; light above the inside/outside midpoint for 2 s, then 5 s more. Safety stop after 20 s |
+| DRIVE_OUT | Full speed for 2.5 s (`DRIVE_SPEED`, `DRIVE_TIME_MS` in config.h), then brakes |
 | STABILIZE | Stands still 3 s; logs the surface light (sandstorm reference) |
 | PARK_SERVO | Both servos slowly back to 0° (start/end angle) |
 | UNFURL | Both servos slowly 0° → 180° |

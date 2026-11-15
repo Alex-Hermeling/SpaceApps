@@ -62,12 +62,11 @@ const unsigned long LIGHT_SAMPLE_MS  = 2000;   // BOOT: average outside light ov
 const unsigned long STABLE_MS        = 2000;   // condition must hold this long to count
 const unsigned long DOOR_DEBOUNCE_MS = 1000;   // door must read "open" this long
 const unsigned long DOOR_SETTLE_MS   = 5000;   // wait after door opens before driving
-const unsigned long CLEAR_EXTRA_MS   = 5000;   // keep driving after "outside" - raise to go further out
-const unsigned long DRIVE_MAX_MS     = 20000;  // safety: never drive longer than this (keep > ~2 s + exit time + CLEAR_EXTRA_MS)
+const unsigned long DRIVE_TIME_MS    = 2500;   // DRIVE_OUT: drive this long, then stop - raise to go further
 const unsigned long STABLE_WAIT_MS   = 3000;   // stand still before unfurling
 const unsigned long STORM_DARK_MS    = 15000;  // dark this long = sandstorm -> furl
 const unsigned long STORM_CLEAR_MS   = 10000;  // light back this long = storm over -> unfurl
 const unsigned long LOG_EVERY_MS     = 500;
 
 // ---------------- Speeds (0..255) ----------------
-const int DRIVE_SLOW_SPEED = 75;  // slow, to protect the solar panel
+const int DRIVE_SPEED = 255;  // DRIVE_OUT speed: full

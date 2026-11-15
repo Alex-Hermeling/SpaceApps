@@ -70,9 +70,6 @@ unsigned long bootSum   = 0;
 unsigned long bootCount = 0;
 unsigned long lastSample = 0;
 
-// DRIVE_OUT: when light first said "outside" (0 = not yet)
-unsigned long outsideAt = 0;
-
 void enterState(State s) {
   state = s;
   stateStart = millis();
@@ -174,28 +171,17 @@ void runMission() {
     case DOOR_SETTLE:
       // Internal timer: let the door finish opening.
       if (inState() >= DOOR_SETTLE_MS) {
-        outsideAt = 0;
-        driveForward(DRIVE_SLOW_SPEED);
+        driveForward(DRIVE_SPEED);
         enterState(DRIVE_OUT);
       }
       break;
 
     case DRIVE_OUT:
-      // Drive slowly to protect the solar panel.
-      driveForward(DRIVE_SLOW_SPEED);
-
-      if (outsideAt == 0 && heldFor(readLight() > lightThreshold, STABLE_MS)) {
-        outsideAt = millis();
-        Serial.println("Light says OUTSIDE - clearing the box");
-      }
-      if (outsideAt != 0 && millis() - outsideAt >= CLEAR_EXTRA_MS) {
+      // Full speed for a fixed time, then stop.
+      driveForward(DRIVE_SPEED);
+      if (inState() >= DRIVE_TIME_MS) {
         brakeAll();
         Serial.println("Out of the box");
-        bootSum = 0; bootCount = 0;  // STABILIZE averages the surface light
-        enterState(STABILIZE);
-      } else if (inState() >= DRIVE_MAX_MS) {
-        brakeAll();
-        Serial.println("Drive TIMEOUT - stopping for safety");
         bootSum = 0; bootCount = 0;  // STABILIZE averages the surface light
         enterState(STABILIZE);
       }
