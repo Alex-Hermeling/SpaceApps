@@ -28,8 +28,11 @@ const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
 const int FRONT_LDR = 2;  // L3 (PB1) = front sensor: ignored for the in-box check
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
 //   OUT: level set by IR_CLOSE_LEVEL when something reflective is close.
-//   Set the trigger distance with the module's potentiometer.
+//   Trigger distance: 2 cm. It is set with the module's potentiometer, not in code:
+//   hold the door 2 cm away and turn the pot until the module's LED just switches on.
 // Short range: reliable up to ~1-2 cm, best on a white/light surface.
+// Once the door has been seen opening, the mission ignores the IR sensor for good
+// (it sits close to the ground and could see the ground as "close" while driving).
 const int IR_PIN = PA5;
 // Level OUT reads when the door is in front of the sensor.
 // This module reads HIGH when close (serial log: ir=1 with the door shut in the dark box).

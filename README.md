@@ -27,8 +27,8 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 |---|---|
 | BOOT | 2 s of outside light (average of L1 rear + L2 side, front sensor L3 ignored) logged; servos assumed furled (servo 1 at 180°, servo 2 at 0°) |
 | STOW_SERVO | Both servos slowly to furled (already there) |
-| WAIT_IN_BOX | Door within ~5 cm (IR) **and** L1 + L2 light < 50% of outside, for 2 s; front sensor L3 ignored |
-| WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
+| WAIT_IN_BOX | Door within ~2 cm (IR, set with the module's potentiometer) **and** L1 + L2 light < 50% of outside, for 2 s; front sensor L3 ignored |
+| WAIT_DOOR_OPEN | IR no longer sees the door for 1 s. After this the IR sensor is ignored (it is close to the ground and could false-trigger while driving) |
 | DOOR_SETTLE | 5 s timer |
 | DRIVE_OUT | Full speed for 2.5 s (`DRIVE_SPEED`, `DRIVE_TIME_MS` in config.h), then brakes |
 | STABILIZE | Stands still 3 s; logs each sensor's surface light (sandstorm reference) |

@@ -63,6 +63,7 @@ int lightOutside   = 0;
 int lightInside    = 0;
 int lightSurface[NUM_LDR] = {0};   // per sensor, where the rover stopped (sandstorm reference)
 bool surfaceLogged = false;
+bool doorOpened    = false;   // latched once the door is seen opening: IR ignored after that
 bool dimmingLogged = false;
 
 // Sandstorm: per-sensor dark timers, and which sensor triggered the furl (-1 = manual)
@@ -108,7 +109,9 @@ void logSensors() {
   }
   Serial.print(']');
   Serial.print("  ir=");     Serial.print(readIr());
-  Serial.print("  door=");   Serial.print(doorClosed() ? "closed" : "open");
+  Serial.print("  door=");
+  if (doorOpened) Serial.print("open (IR ignored)");
+  else            Serial.print(doorClosed() ? "closed" : "open");
   Serial.print("  servo=");  Serial.print(servoAngle);
   if (surfaceLogged) {
     Serial.print("  surface=[");
@@ -175,9 +178,12 @@ void runMission() {
     }
 
     case WAIT_DOOR_OPEN:
-      // Door opening: IR no longer sees the door within ~5 cm.
+      // Door opening: IR no longer sees the door within ~2 cm.
+      // From here on the IR sensor is ignored: it is close to the ground and could
+      // read "close" during movement. Nothing after this state looks at it.
       if (heldFor(!doorClosed(), DOOR_DEBOUNCE_MS)) {
-        Serial.println("Door opened");
+        doorOpened = true;
+        Serial.println("Door opened - IR sensor ignored from now on");
         enterState(DOOR_SETTLE);
       }
       break;
