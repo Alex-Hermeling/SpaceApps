@@ -2,9 +2,12 @@
 // STM32F103C8T6 "Blue Pill" + 2x TB6612FNG + 3 DC motors, 3 LDR light sensors, IR door sensor, 2 servos.
 // Pins: pinout.md / config.h. Motor C is set up but not used by the mission yet.
 //
-// Mission (everything before unfurling):
+// Mission:
 //   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
-//        -> STABILIZE -> PARK_SERVO -> READY_TO_UNFURL
+//        -> STABILIZE -> PARK_SERVO -> UNFURL (0 -> 180) -> UNFURLED
+//        -> FURL (180 -> 0) -> FURLED -> UNFURL ... (loop)
+// Furl / unfurl again are triggered from the Serial Monitor for now
+// ('f' = furl, 'u' = unfurl) until sandstorm detection exists.
 //
 // Servo rule: the program always ends with both servos at SERVO_PARK_ANGLE (0),
 // so at power-up it is assumed to be there. STOW_SERVO / PARK_SERVO make sure it is
@@ -28,13 +31,26 @@ enum State {
   DRIVE_OUT,
   STABILIZE,
   PARK_SERVO,
-  READY_TO_UNFURL
+  UNFURL,
+  UNFURLED,
+  FURL,
+  FURLED
 };
 
 const char* STATE_NAMES[] = {
   "BOOT", "STOW_SERVO", "WAIT_IN_BOX", "WAIT_DOOR_OPEN", "DOOR_SETTLE",
-  "DRIVE_OUT", "STABILIZE", "PARK_SERVO", "READY_TO_UNFURL"
+  "DRIVE_OUT", "STABILIZE", "PARK_SERVO", "UNFURL", "UNFURLED", "FURL", "FURLED"
 };
+
+// Serial command for the panel: 'f' = furl, 'u' = unfurl, 0 = none.
+// Stand-in for sandstorm detection, which isn't built yet.
+char readPanelCommand() {
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == 'f' || c == 'u') return c;
+  }
+  return 0;
+}
 
 State state = BOOT;
 unsigned long stateStart = 0;   // millis() when the current state began
@@ -192,20 +208,46 @@ void runMission() {
       // Always leave the servo at SERVO_PARK_ANGLE at the end, so the next power-up can assume it.
       if (servoAtTarget()) {
         Serial.print("Servo parked at "); Serial.println(SERVO_PARK_ANGLE);
-        Serial.println("READY TO UNFURL");
-        enterState(READY_TO_UNFURL);
+        servoMoveTo(SERVO_UNFURL_ANGLE);
+        enterState(UNFURL);
       }
       break;
 
-    case READY_TO_UNFURL:
-      // TODO: unfurl panels, then sandstorm -> furl loop.
-      // Any future code must also finish with the servo back at SERVO_PARK_ANGLE.
+    case UNFURL:
+      // Both servos 0 -> 180, slowly.
+      if (servoAtTarget()) {
+        Serial.println("UNFURLED - send 'f' to furl");
+        enterState(UNFURLED);
+      }
+      break;
+
+    case UNFURLED:
+      // TODO: sandstorm detection triggers the furl here.
+      if (readPanelCommand() == 'f') {
+        servoMoveTo(SERVO_FURL_ANGLE);
+        enterState(FURL);
+      }
+      break;
+
+    case FURL:
+      // Both servos 180 -> 0, slowly. Ends at 0, so the next power-up can assume it.
+      if (servoAtTarget()) {
+        Serial.println("FURLED (servos at 0, safe to power off) - send 'u' to unfurl");
+        enterState(FURLED);
+      }
+      break;
+
+    case FURLED:
+      if (readPanelCommand() == 'u') {
+        servoMoveTo(SERVO_UNFURL_ANGLE);
+        enterState(UNFURL);
+      }
       break;
   }
 
-  servoUpdate();  // step the servo towards its target
+  servoUpdate();  // step the servos towards their target
 
-  if (state != READY_TO_UNFURL) logSensors();
+  if (state != UNFURLED && state != FURLED) logSensors();
 }
 
 void loop() {

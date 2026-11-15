@@ -1,6 +1,6 @@
 # SpaceApps
 
-Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives slowly out, then stops ready to unfurl its solar panels.
+Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives slowly out, stops, and unfurls its solar panels (servos 0° → 180°). Furl (180° → 0°) is triggered from the Serial Monitor until sandstorm detection exists.
 
 ## Hardware
 - STM32F103C8T6 Blue Pill (Roger Clark STM32 core)
@@ -33,7 +33,10 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 | DRIVE_OUT | Drives slowly; light above the inside/outside midpoint for 2 s, then 5 s more. Safety stop after 20 s |
 | STABILIZE | Stands still 3 s |
 | PARK_SERVO | Both servos slowly back to 0° (start/end angle) |
-| READY_TO_UNFURL | Next step to build: unfurl panels |
+| UNFURL | Both servos slowly 0° → 180° |
+| UNFURLED | Waits for `f` in the Serial Monitor (later: sandstorm detection) |
+| FURL | Both servos slowly 180° → 0° (safe to power off) |
+| FURLED | Waits for `u` in the Serial Monitor, then unfurls again |
 
 ## Hardware test (`HardwareTest/HardwareTest.ino`)
 A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR sensor and 3 light sensors. It uses the pins in [`pinout.md`](pinout.md). Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud, Newline):

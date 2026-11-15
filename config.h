@@ -44,6 +44,8 @@ const int SERVO_PINS[NUM_SERVOS] = {PA6, PA7};
 // so at power-up we ASSUME it is there (its real position can't be read).
 const int SERVO_PARK_ANGLE = 0;   // start + end position (boot at 0)
 const int SERVO_STOW_ANGLE = 0;   // position while in the box
+const int SERVO_UNFURL_ANGLE = 180;  // unfurl: both servos 0 -> 180
+const int SERVO_FURL_ANGLE   = 0;    // furl:   both servos 180 -> 0 (= park, so the rule holds)
 const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 deg = 1.35 s)
 
 // ---------------- Thresholds ----------------
