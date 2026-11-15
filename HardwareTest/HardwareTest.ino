@@ -213,6 +213,13 @@ void setup() {
   Serial.begin(115200);
   delay(1500);
 
+#if defined(ARDUINO_ARCH_STM32F1)
+  // Free PA15, PB3, PB4 from JTAG so they work as normal pins (AIN1 is on PA15).
+  // With "Serial" or "STLink" upload the Roger Clark core leaves JTAG on.
+  // SW_ONLY keeps SWD (PA13/PA14), so ST-Link uploads still work.
+  afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY);
+#endif
+
   int outPins[] = {AIN1, AIN2, BIN1, BIN2, CIN1, CIN2, STBY};
   for (int p : outPins) pinMode(p, OUTPUT);
   pinMode(IR_PIN, INPUT_PULLUP);
