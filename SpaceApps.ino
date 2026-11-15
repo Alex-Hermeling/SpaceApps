@@ -44,6 +44,27 @@ const char* STATE_NAMES[] = {
   "DRIVE_OUT", "STABILIZE", "PARK_SERVO", "UNFURL", "UNFURLED", "FURL", "FURLED"
 };
 
+// ---------------- Status LED patterns (onboard LED, PC13) ----------------
+// Each state repeats: `pulses` blinks of `onMs` on / `offMs` off, then `gapMs` dark.
+// pulses = 0 means solid on. Order must match enum State.
+struct LedPattern { int pulses; unsigned int onMs, offMs, gapMs; };
+const LedPattern LED_PATTERNS[] = {
+  {1, 100, 100,   0},  // BOOT            fast blink (logging outside light)
+  {1,  50,  50,   0},  // STOW_SERVO      flicker (servos moving)
+  {1, 100, 900,   0},  // WAIT_IN_BOX     1 short blink per second
+  {2, 100, 150, 900},  // WAIT_DOOR_OPEN  double blink
+  {1, 250, 250,   0},  // DOOR_SETTLE     medium blink (5 s countdown)
+  {0,   0,   0,   0},  // DRIVE_OUT       solid on
+  {3, 100, 150, 900},  // STABILIZE       triple blink
+  {1,  50,  50,   0},  // PARK_SERVO      flicker (servos moving)
+  {1,  50,  50,   0},  // UNFURL          flicker (servos moving)
+  {1,  50,1950,   0},  // UNFURLED        short heartbeat every 2 s
+  {1,  50,  50,   0},  // FURL            flicker (servos moving)
+  {1,1000,1000,   0},  // FURLED          slow 1 s on / 1 s off
+};
+static_assert(sizeof(LED_PATTERNS) / sizeof(LED_PATTERNS[0]) == FURLED + 1,
+              "LED_PATTERNS needs one entry per State");
+
 // Serial command for the panel: 'f' = furl, 'u' = unfurl, 0 = none (manual override).
 char readPanelCommand() {
   while (Serial.available()) {
@@ -85,6 +106,21 @@ void enterState(State s) {
   condSince = 0;
   Serial.print("\n>>> ");
   Serial.println(STATE_NAMES[s]);
+}
+
+// Drive the status LED from the current state's pattern (non-blocking).
+void ledUpdate() {
+  const LedPattern& p = LED_PATTERNS[state];
+  bool on;
+  if (p.pulses == 0) {
+    on = true;  // solid
+  } else {
+    unsigned long period = p.onMs + p.offMs;
+    unsigned long cycle  = p.pulses * period + p.gapMs;
+    unsigned long t = (millis() - stateStart) % cycle;
+    on = (t < p.pulses * period) && (t % period < p.onMs);
+  }
+  digitalWrite(LED_PIN, on ? LED_ON_LEVEL : !LED_ON_LEVEL);
 }
 
 // True once `cond` has been true continuously for `ms`.
@@ -133,6 +169,8 @@ void setup() {
   // Same as HardwareTest: free PA15/PB3/PB4 from JTAG (keeps SWD for ST-Link).
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY);
 #endif
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, !LED_ON_LEVEL);  // off
   motorsInit();
   sensorsInit();
   servoInit();  // assumes the servo is at SERVO_PARK_ANGLE (where the last run left it)
@@ -333,6 +371,7 @@ void runMission() {
   }
 
   servoUpdate();  // step the servos towards their target
+  ledUpdate();    // blink the status LED for the current state
 
   logSensors();
 }

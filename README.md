@@ -38,6 +38,21 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 | FURL | Both servos slowly 0° → 180° (safe to power off) |
 | FURLED | Sandstorm over: **the sensor that went dark** is above 60% of its surface light for 10 s, then unfurls again (loops). After a manual furl only `u` unfurls |
 
+### Status LED (onboard, PC13)
+| State | LED |
+|---|---|
+| BOOT | Fast blink |
+| STOW_SERVO, PARK_SERVO, UNFURL, FURL | Fast flicker (servos moving) |
+| WAIT_IN_BOX | 1 short blink per second |
+| WAIT_DOOR_OPEN | Double blink |
+| DOOR_SETTLE | Medium blink (5 s countdown) |
+| DRIVE_OUT | Solid on |
+| STABILIZE | Triple blink |
+| UNFURLED | Short heartbeat every 2 s |
+| FURLED | Slow: 1 s on, 1 s off |
+
+Patterns are in `LED_PATTERNS` at the top of `SpaceApps.ino`.
+
 A loose light sensor floats at about 1000–2000. The dark threshold (30% of a lit reading of about 3000, so about 900) sits below that, so a loose sensor can't fake a sandstorm. Keep it that way when tuning `STORM_DARK_FRACTION`.
 
 A reading **below 50** is treated as invalid (loose wire, short to ground, broken sensor; real darkness reads about 400). Invalid sensors are left out of the box check and the sandstorm check, and are marked `!` in the serial log (`LDR_MIN_VALID` in config.h). If the sensor that triggered a furl goes invalid, the rover stays furled until `u`.

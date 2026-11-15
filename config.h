@@ -58,6 +58,11 @@ const int SERVO_UNFURL_ANGLE = 180;  // unfurl: both servos 180 -> 0
 const int SERVO_FURL_ANGLE   = 0;    // furl:   both servos 0 -> 180 (= park)
 const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 deg = 1.35 s)
 
+// ---------------- Status LED ----------------
+// Blue Pill onboard LED: PC13, lights when the pin is LOW. Blinks a different pattern per state.
+const int LED_PIN = PC13;
+const int LED_ON_LEVEL = LOW;
+
 // ---------------- Thresholds ----------------
 const float IN_BOX_FRACTION = 0.5;  // in box when L1+L2 light < outside light * this (front L3 ignored)
 
