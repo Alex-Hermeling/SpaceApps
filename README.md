@@ -1,6 +1,6 @@
 # SpaceApps
 
-Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives out (full speed, 2.5 s), stops, and unfurls its solar panels (servo 1: 180° → 0°, servo 2: 0° → 180°; servo 1 is mounted mirrored). When a sandstorm comes (any one light sensor dark for 2 s) it furls (back to servo 1 at 180°, servo 2 at 0°), and unfurls again once that same sensor sees light for 10 s.
+Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives out (full speed, 2.5 s), stops, and unfurls its solar panels (both servos 180° → 0°; 180° = closed). When a sandstorm comes (any one light sensor dark for 2 s) it furls (both servos back to 180°), and unfurls again once that same sensor sees light for 10 s.
 
 ## Hardware
 - STM32F103C8T6 Blue Pill (Roger Clark STM32 core)
@@ -25,7 +25,7 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 ## Mission states
 | State | Moves on when |
 |---|---|
-| BOOT | 2 s of outside light (average of L1 rear + L2 side, front sensor L3 ignored) logged; servos assumed furled (servo 1 at 180°, servo 2 at 0°) |
+| BOOT | 2 s of outside light (average of L1 rear + L2 side, front sensor L3 ignored) logged; servos assumed furled (both at 180°) |
 | STOW_SERVO | Both servos slowly to furled (already there) |
 | WAIT_IN_BOX | Door within ~2 cm (IR, set with the module's potentiometer) **and** L1 + L2 light < 50% of outside, for 2 s; front sensor L3 ignored |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s. After this the IR sensor is ignored (it is close to the ground and could false-trigger while driving) |
@@ -33,9 +33,9 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 | DRIVE_OUT | Full speed for 2.5 s (`DRIVE_SPEED`, `DRIVE_TIME_MS` in config.h), then brakes |
 | STABILIZE | Stands still 3 s; logs each sensor's surface light (sandstorm reference) |
 | PARK_SERVO | Both servos slowly back to furled (start/end position) |
-| UNFURL | Servo 1 slowly 180° → 0°, servo 2 slowly 0° → 180° |
+| UNFURL | Both servos slowly 180° → 0° |
 | UNFURLED | Sandstorm: **any one** sensor below 30% of its own surface light for 2 s. `f` in the Serial Monitor forces it |
-| FURL | Servo 1 slowly 0° → 180°, servo 2 slowly 180° → 0° (safe to power off) |
+| FURL | Both servos slowly 0° → 180° (safe to power off) |
 | FURLED | Sandstorm over: **the sensor that went dark** is above 60% of its surface light for 10 s, then unfurls again (loops). After a manual furl only `u` unfurls |
 
 A loose light sensor floats at about 1000–2000. The dark threshold (30% of a lit reading of about 3000, so about 900) sits below that, so a loose sensor can't fake a sandstorm. Keep it that way when tuning `STORM_DARK_FRACTION`.
@@ -55,12 +55,12 @@ A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR se
 | `o` | Switch selected servo (1 ↔ 2) | | |
 | `0`–`180` + Enter | Selected servo to that angle | `w` | Selected servo sweep furled → unfurled → furled |
 | `]` | Selected servo +10° | `[` | Selected servo −10° |
-| `v` | Release selected servo (go limp) | `x` | Park **both** servos furled: servo 1 at 180°, servo 2 at 0° (before powering off) |
-| `u` | Unfurl: servo 1 → 0°, servo 2 → 180° | `f` | Furl: servo 1 → 180°, servo 2 → 0° |
+| `v` | Release selected servo (go limp) | `x` | Park **both** servos furled at 180° (before powering off) |
+| `u` | Unfurl: **both** servos → 0° | `f` | Furl: **both** servos → 180° |
 | `,` | Servos slower | `.` | Servos faster |
 | `i` | IR live readout on/off | `p` | IR reading once |
 | `l` | Light live readout on/off (L1 rear, L2 side, L3 front, average, box = L1+L2) | `k` | Light reading once |
 | `h` | Help | | |
 
 ## Servo rule
-Every program ends **furled**: servo 1 at **180°** (it is mounted mirrored, `SERVO_REVERSED` in config.h) and servo 2 at **0°**. At power-up the code assumes they are there. The mission makes sure the panel is furled before entering the box and at the end. In HardwareTest, press `x` before powering off. If a run is cut short (reset or power off) with the servos elsewhere, they snap to furled at the next power-up.
+Every program ends **furled**: both servos at **180°** (both are mounted mirrored, `SERVO_REVERSED` in config.h). At power-up the code assumes they are there. The mission makes sure the panel is furled before entering the box and at the end. In HardwareTest, press `x` before powering off. If a run is cut short (reset or power off) with the servos elsewhere, they snap to furled at the next power-up.

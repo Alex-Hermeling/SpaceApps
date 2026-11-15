@@ -43,19 +43,19 @@ const int IR_CLOSE_LEVEL = HIGH;
 // Both on timer 3. The Servo library takes over the whole timer, so no motor PWM may use it.
 const int NUM_SERVOS = 2;
 const int SERVO_PINS[NUM_SERVOS] = {PB0, PA7};  // servo 1, servo 2
-// Servo 1 is mounted mirrored: it gets 180 - angle. So for servo 1, 180 = furled (closed)
-// and 0 = unfurled; for servo 2, 0 = furled and 180 = unfurled.
-const bool SERVO_REVERSED[NUM_SERVOS] = {true, false};
+// Both servos are mounted mirrored: they get 180 - angle.
+// So for both: 180 = furled (closed), 0 = unfurled (open).
+const bool SERVO_REVERSED[NUM_SERVOS] = {true, true};
 
 // All angles below are PANEL angles (0 = furled/closed, 180 = unfurled); the
 // mirroring above turns them into the real angle for each servo.
 // Servo convention: the program always ENDS furled (SERVO_PARK_ANGLE),
 // so at power-up we ASSUME the panel is there (its real position can't be read).
-// Real angles at boot: servo 1 = 180, servo 2 = 0.
+// Real angles at boot: both servos at 180.
 const int SERVO_PARK_ANGLE = 0;   // start + end position (furled)
 const int SERVO_STOW_ANGLE = 0;   // position while in the box (furled)
-const int SERVO_UNFURL_ANGLE = 180;  // unfurl: servo 1 180 -> 0, servo 2 0 -> 180
-const int SERVO_FURL_ANGLE   = 0;    // furl:   servo 1 0 -> 180, servo 2 180 -> 0 (= park)
+const int SERVO_UNFURL_ANGLE = 180;  // unfurl: both servos 180 -> 0
+const int SERVO_FURL_ANGLE   = 0;    // furl:   both servos 0 -> 180 (= park)
 const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 deg = 1.35 s)
 
 // ---------------- Thresholds ----------------
