@@ -37,11 +37,11 @@ On the Blue Pill, **G** = GND.
 | Part | Blue Pill | Wiring |
 |---|---|---|
 | IR sensor TCRT5000 (VCC, GND, OUT) | **PA5** | VCC → 3.3, GND → G, OUT → PA5. OUT reads HIGH when the door is close |
-| Photoresistor 1 (rear) | **PA4** | 3.3 → LDR → PA4 → **33 kΩ** (for now) → G |
+| Photoresistor 1 (rear) | **PA4** | 3.3 → LDR → PA4 → 8 kΩ → G |
 | Photoresistor 2 (side) | **PA2** | 3.3 → LDR → PA2 → 8 kΩ → G |
 | Photoresistor 3 (front) | **PB1** | 3.3 → LDR → PB1 → 8 kΩ → G. Ignored for the in-box check |
 
-Each photoresistor needs its own resistor: L1 has 33 kΩ for now, L2 and L3 have 8 kΩ (4.7–33 kΩ works; higher = more sensitive in dim light). Brighter = higher reading (0–4095).
+Each photoresistor needs its own 8 kΩ resistor (4.7–22 kΩ also works). Brighter = higher reading (0–4095).
 
 ## Servos
 | Servo wire | Servo 1 | Servo 2 | Notes |

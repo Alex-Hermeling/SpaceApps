@@ -31,8 +31,7 @@ const int SERVO_PINS[2] = {PA6, PA7};
 const int IR_PIN = PA5;
 const int IR_CLOSE_LEVEL = HIGH;  // level OUT reads when the door is close (this module: HIGH)
 
-// Light sensors: 3.3V -> LDR -> pin -> resistor -> GND (brighter = higher, 0..4095)
-// Resistor: L1 = 33k (for now), L2 + L3 = 8k. L1 reads higher than the others in the same light.
+// Light sensors: 3.3V -> LDR -> pin -> 8k -> GND (brighter = higher, 0..4095)
 const int NUM_LDR = 3;
 const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
 const char* LDR_NAMES[NUM_LDR] = {"rear", "side", "front"};
