@@ -41,7 +41,11 @@ const int FRONT_LDR = 2;  // L3: ignored for the in-box check in the main sketch
 int speed = 100;  // 0..255, change with + / -
 
 Servo servos[2];
-int servoAngle[2] = {0, 0};  // assumed at power-up: every program ends with the servos at 0
+// Servo 1 is mounted mirrored: 180 = furled (closed), 0 = unfurled.
+// Servo 2:                     0 = furled,          180 = unfurled.
+const int FURLED_ANGLE[2]   = {180, 0};
+const int UNFURLED_ANGLE[2] = {0, 180};
+int servoAngle[2] = {FURLED_ANGLE[0], FURLED_ANGLE[1]};  // assumed at power-up: every program ends furled
 int sel = 0;                 // selected servo: 0 = servo 1, 1 = servo 2
 int servoStepMs = 15;        // ms per degree: higher = slower. 15 -> 180 deg in 2.7 s. 0 = full speed
 
@@ -131,13 +135,12 @@ void servoTo(int n, int angle) {
   servos[n].write(servoAngle[n]);
 }
 
-// Move BOTH servos together, slowly (same as the main sketch's unfurl / furl).
-void servosBothTo(int angle) {
-  angle = constrain(angle, 0, 180);
+// Move BOTH servos together, slowly, each to its own target (same as the main sketch's unfurl / furl).
+void servosBothTo(const int target[2]) {
   for (int n = 0; n < 2; n++) if (!servos[n].attached()) servos[n].attach(SERVO_PINS[n]);
-  while (servoAngle[0] != angle || servoAngle[1] != angle) {
+  while (servoAngle[0] != target[0] || servoAngle[1] != target[1]) {
     for (int n = 0; n < 2; n++) {
-      if (servoAngle[n] != angle) servoAngle[n] += (angle > servoAngle[n]) ? 1 : -1;
+      if (servoAngle[n] != target[n]) servoAngle[n] += (target[n] > servoAngle[n]) ? 1 : -1;
       servos[n].write(servoAngle[n]);
     }
     delay(servoStepMs);
@@ -145,10 +148,11 @@ void servosBothTo(int angle) {
 }
 
 void servoSweep(int n) {
-  Serial.print("Servo "); Serial.print(n + 1); Serial.println(" sweep 0 -> 180 -> 0");
-  servoTo(n, 0);
-  servoTo(n, 180);
-  servoTo(n, 0);
+  // Furled -> unfurled -> furled, so it always ends closed.
+  Serial.print("Servo "); Serial.print(n + 1); Serial.println(" sweep furled -> unfurled -> furled");
+  servoTo(n, FURLED_ANGLE[n]);
+  servoTo(n, UNFURLED_ANGLE[n]);
+  servoTo(n, FURLED_ANGLE[n]);
 }
 
 void printServoSpeed() {
@@ -214,10 +218,10 @@ void printHelp() {
   Serial.println("  o  switch selected servo (1 <-> 2)");
   Serial.println("  0..180  type an angle + Enter, e.g. 45");
   Serial.println("  ]  +10 deg            [  -10 deg");
-  Serial.println("  w  sweep 0-180-0      v  release (go limp)");
+  Serial.println("  w  sweep (ends furled) v  release (go limp)");
   Serial.println("  ,  servo slower       .  servo faster");
-  Serial.println("  x  park BOTH servos at 0 (do this before powering off)");
-  Serial.println("  u  unfurl: BOTH servos 0 -> 180   f  furl: BOTH servos 180 -> 0");
+  Serial.println("  x  park BOTH servos furled: servo 1 = 180, servo 2 = 0 (before powering off)");
+  Serial.println("  u  unfurl: servo 1 -> 0, servo 2 -> 180   f  furl: servo 1 -> 180, servo 2 -> 0");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
   Serial.println("Light sensors (L1 rear PA4, L2 side PA2, L3 front PB1):");
@@ -257,7 +261,7 @@ void setup() {
   coastAll();
   digitalWrite(STBY, HIGH);   // enables both drivers
 
-  // Assume both servos are at 0: every program leaves them there before ending.
+  // Assume both servos are furled (servo 1 at 180, servo 2 at 0): every program ends there.
   for (int n = 0; n < 2; n++) {
     servos[n].attach(SERVO_PINS[n]);
     servos[n].write(servoAngle[n]);
@@ -293,9 +297,9 @@ void loop() {
     case '[': servoTo(sel, servoAngle[sel] - 10); break;
     case 'w': servoSweep(sel); break;
     case 'v': servos[sel].detach(); Serial.print("Servo "); Serial.print(sel + 1); Serial.println(" released"); break;
-    case 'x': servoTo(0, 0); servoTo(1, 0); Serial.println("Both servos parked at 0 - safe to power off"); break;
-    case 'u': Serial.println("Unfurl: both servos -> 180"); servosBothTo(180); Serial.println("Unfurled"); break;
-    case 'f': Serial.println("Furl: both servos -> 0");     servosBothTo(0);   Serial.println("Furled - safe to power off"); break;
+    case 'x': servosBothTo(FURLED_ANGLE); Serial.println("Both servos parked furled (servo 1 = 180, servo 2 = 0) - safe to power off"); break;
+    case 'u': Serial.println("Unfurl: servo 1 -> 0, servo 2 -> 180"); servosBothTo(UNFURLED_ANGLE); Serial.println("Unfurled"); break;
+    case 'f': Serial.println("Furl: servo 1 -> 180, servo 2 -> 0"); servosBothTo(FURLED_ANGLE); Serial.println("Furled - safe to power off"); break;
     case ',': servoStepMs = (servoStepMs == 0) ? 5 : min(servoStepMs * 2, 200); printServoSpeed(); break;
     case '.': servoStepMs = (servoStepMs <= 5) ? 0 : servoStepMs / 2;           printServoSpeed(); break;
 

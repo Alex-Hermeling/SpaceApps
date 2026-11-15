@@ -8,17 +8,21 @@
 #include "config.h"
 
 Servo panelServos[NUM_SERVOS];
-int servoAngle  = SERVO_PARK_ANGLE;  // assumed position at power-up (both servos)
+int servoAngle  = SERVO_PARK_ANGLE;  // PANEL angle (0 = furled), assumed at power-up
 int servoTarget = SERVO_PARK_ANGLE;
 unsigned long servoLastStep = 0;
 
+// Write a panel angle to every servo; mirrored servos (SERVO_REVERSED) get 180 - angle.
+inline void servoWriteAll(int angle) {
+  for (int i = 0; i < NUM_SERVOS; i++)
+    panelServos[i].write(SERVO_REVERSED[i] ? 180 - angle : angle);
+}
+
 inline void servoInit() {
-  // The servo is assumed to already be at SERVO_PARK_ANGLE (the program always
-  // ends there), so writing that angle doesn't make it jump.
-  for (int i = 0; i < NUM_SERVOS; i++) {
-    panelServos[i].attach(SERVO_PINS[i]);
-    panelServos[i].write(servoAngle);
-  }
+  // The panel is assumed to already be at SERVO_PARK_ANGLE (furled - the program
+  // always ends there), so writing that angle doesn't make the servos jump.
+  for (int i = 0; i < NUM_SERVOS; i++) panelServos[i].attach(SERVO_PINS[i]);
+  servoWriteAll(servoAngle);
 }
 
 inline void servoMoveTo(int angle) {
@@ -32,5 +36,5 @@ inline void servoUpdate() {
   if (millis() - servoLastStep < SERVO_STEP_MS) return;
   servoLastStep = millis();
   servoAngle += (servoTarget > servoAngle) ? 1 : -1;
-  for (int i = 0; i < NUM_SERVOS; i++) panelServos[i].write(servoAngle);
+  servoWriteAll(servoAngle);
 }
