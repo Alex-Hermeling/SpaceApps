@@ -24,8 +24,8 @@ const int CIN2 = PB13;  // motor C direction
 // ---------------- Sensor pins ----------------
 // 3 light sensors: 3.3V -> LDR -> pin -> 8k -> GND  (brighter = higher value)
 const int NUM_LDR = 3;
-const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1..L3
-const int FRONT_LDR = 0;  // L1 (PA4) = front sensor: ignored for the in-box check
+const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
+const int FRONT_LDR = 2;  // L3 (PB1) = front sensor: ignored for the in-box check
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
 //   OUT: level set by IR_CLOSE_LEVEL when something reflective is close.
 //   Set the trigger distance with the module's potentiometer.
@@ -50,7 +50,7 @@ const int SERVO_FURL_ANGLE   = 0;    // furl:   both servos 180 -> 0 (= park, so
 const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 deg = 1.35 s)
 
 // ---------------- Thresholds ----------------
-const float IN_BOX_FRACTION = 0.5;  // in box when L2+L3 light < outside light * this (front L1 ignored)
+const float IN_BOX_FRACTION = 0.5;  // in box when L1+L2 light < outside light * this (front L3 ignored)
 
 // Sandstorm: checked PER SENSOR, each against its own surface light
 // (logged while standing still after driving out). ANY one sensor dark -> furl.

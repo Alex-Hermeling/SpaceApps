@@ -33,7 +33,7 @@ const int IR_CLOSE_LEVEL = HIGH;  // level OUT reads when the door is close (thi
 
 // Light sensors: 3.3V -> LDR -> pin -> 8k -> GND (brighter = higher, 0..4095)
 const int NUM_LDR = 3;
-const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1..L3
+const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
 
 // ---------------- State ----------------
 int speed = 100;  // 0..255, change with + / -
@@ -213,7 +213,7 @@ void printHelp() {
   Serial.println("  u  unfurl: BOTH servos 0 -> 180   f  furl: BOTH servos 180 -> 0");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
-  Serial.println("Light sensors (L1 PA4, L2 PA2, L3 PB1):");
+  Serial.println("Light sensors (L1 rear PA4, L2 side PA2, L3 front PB1):");
   Serial.println("  l  live readout on/off   k  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);

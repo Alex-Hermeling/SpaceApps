@@ -25,9 +25,9 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 ## Mission states
 | State | Moves on when |
 |---|---|
-| BOOT | 2 s of outside light (average of L2 + L3, front sensor L1 ignored) logged; servos assumed at 0° |
+| BOOT | 2 s of outside light (average of L1 rear + L2 side, front sensor L3 ignored) logged; servos assumed at 0° |
 | STOW_SERVO | Both servos slowly to the in-box angle (0°, so already there) |
-| WAIT_IN_BOX | Door within ~5 cm (IR) **and** L2 + L3 light < 50% of outside, for 2 s; front sensor L1 ignored |
+| WAIT_IN_BOX | Door within ~5 cm (IR) **and** L1 + L2 light < 50% of outside, for 2 s; front sensor L3 ignored |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
 | DOOR_SETTLE | 5 s timer |
 | DRIVE_OUT | Full speed for 2.5 s (`DRIVE_SPEED`, `DRIVE_TIME_MS` in config.h), then brakes |

@@ -6,7 +6,7 @@
 //   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
 //        -> STABILIZE -> PARK_SERVO -> UNFURL (0 -> 180) -> UNFURLED
 //        -> FURL (180 -> 0) -> FURLED -> UNFURL ... (loop)
-// In-box check uses L2 + L3 only (front sensor L1 ignored); the door itself is the IR sensor.
+// In-box check uses L1 (rear) + L2 (side) only (front sensor L3 ignored); the door itself is the IR sensor.
 // Sandstorm = ANY one light sensor dark (vs. its own surface light, logged in STABILIZE)
 // for STORM_DARK_MS -> furl. That same sensor light again for STORM_CLEAR_MS -> unfurl. Loops.
 // Manual override in the Serial Monitor: 'f' = furl, 'u' = unfurl.
@@ -164,7 +164,7 @@ void runMission() {
 
     case WAIT_IN_BOX: {
       // Know we're in the box: door close to the IR sensor AND dark compared to outside
-      // (L2 + L3 only - the front sensor L1 is ignored).
+      // (L1 rear + L2 side only - the front sensor L3 is ignored).
       bool dark = readBoxLight() < lightOutside * IN_BOX_FRACTION;
       if (heldFor(doorClosed() && dark, STABLE_MS)) {
         lightInside = readBoxLight();
@@ -218,7 +218,7 @@ void runMission() {
           if (i) Serial.print(' ');
           Serial.print(lightSurface[i]);
         }
-        Serial.println("]  (L1 L2 L3)");
+        Serial.println("]  (L1 rear, L2 side, L3 front)");
         surfaceLogged = true;
         servoMoveTo(SERVO_PARK_ANGLE);
         enterState(PARK_SERVO);
