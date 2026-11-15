@@ -25,7 +25,7 @@ const int CIN2 = PB13;
 
 // Servos - both on timer 3 (the Servo library takes over the whole timer,
 // so no motor PWM may use timer 3)
-const int SERVO_PINS[2] = {PA6, PA7};
+const int SERVO_PINS[2] = {PB0, PA7};  // servo 1, servo 2
 
 // TCRT5000 IR sensor
 const int IR_PIN = PA5;
@@ -159,7 +159,7 @@ void printServoSpeed() {
 
 void printSelected() {
   Serial.print("Selected: servo "); Serial.print(sel + 1);
-  Serial.print(" (pin "); Serial.print(sel == 0 ? "PA6" : "PA7");
+  Serial.print(" (pin "); Serial.print(sel == 0 ? "PB0" : "PA7");
   Serial.print(", at "); Serial.print(servoAngle[sel]); Serial.println(" deg)");
 }
 
@@ -210,7 +210,7 @@ void printHelp() {
   Serial.println("  +  faster             -  slower");
   Serial.println("  t  auto test sequence (A, B, C, then A+B)");
   Serial.println("  d  diagnose (all 3 full speed, PWM bypassed)");
-  Serial.println("Servos (1 = PA6, 2 = PA7) - commands act on the selected servo:");
+  Serial.println("Servos (1 = PB0, 2 = PA7) - commands act on the selected servo:");
   Serial.println("  o  switch selected servo (1 <-> 2)");
   Serial.println("  0..180  type an angle + Enter, e.g. 45");
   Serial.println("  ]  +10 deg            [  -10 deg");

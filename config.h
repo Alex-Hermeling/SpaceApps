@@ -39,7 +39,7 @@ const int IR_CLOSE_LEVEL = HIGH;
 // ---------------- Servos (unfurl) ----------------
 // Both on timer 3. The Servo library takes over the whole timer, so no motor PWM may use it.
 const int NUM_SERVOS = 2;
-const int SERVO_PINS[NUM_SERVOS] = {PA6, PA7};
+const int SERVO_PINS[NUM_SERVOS] = {PB0, PA7};  // servo 1, servo 2
 
 // Servo convention: the program always ENDS with the servos at SERVO_PARK_ANGLE,
 // so at power-up we ASSUME it is there (its real position can't be read).

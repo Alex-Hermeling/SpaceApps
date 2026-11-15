@@ -46,7 +46,7 @@ Each photoresistor needs its own 8 kΩ resistor (4.7–22 kΩ also works). Brigh
 ## Servos
 | Servo wire | Servo 1 | Servo 2 | Notes |
 |---|---|---|---|
-| Orange / yellow (signal) | **PA6** | **PA7** | Both on timer 3 |
+| Orange / yellow (signal) | **PB0** | **PA7** | Both on timer 3 |
 | Red (+) | Battery + (or 5V) | Battery + (or 5V) | **Not** 3.3. With two servos, battery is safer than the Blue Pill 5V pin |
 | Brown / black (−) | G | G | |
 
@@ -64,7 +64,7 @@ All grounds must be connected together.
 | Pin | Can do |
 |---|---|
 | PA3 | Digital, analog (ADC), PWM (timer 2) |
-| PB0 | Digital, analog (ADC). No PWM (timer 3 = servos) |
+| PA6 | Digital, analog (ADC). No motor PWM (timer 3 = servos); can take a servo again |
 | PB8, PB9 | Digital, PWM (timer 4) |
 | PB10, PB11 | Digital |
 | PA15, PB3, PB4 | Digital, only after disabling JTAG in code (see notes) |
@@ -79,7 +79,7 @@ All grounds must be connected together.
 | PC13, PC14, PC15 | Onboard LED and clock crystal; can only supply very little current |
 
 ## Rules and notes
-- **Timer 3 (PA6, PA7, PB0, PB1) belongs to the servos.** The servo library takes over that whole timer, so motor PWM must not use it. PB1 (and free PB0) are still fine for analog reads.
+- **Timer 3 (PA6, PA7, PB0, PB1) belongs to the servos.** The servo library takes over that whole timer, so motor PWM must not use it. PB1 (light sensor L3) and free PA6 are still fine for analog reads.
 - **Analog pins max 3.3 V.** The ADC pins are not 5 V tolerant.
 - **PB3, PB4 and PA15 are JTAG pins.** With the Serial or ST-Link upload method the Roger Clark core leaves JTAG on, so the code must call `afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY);` at the start of `setup()` (HardwareTest does). That frees these pins and keeps SWD for ST-Link uploads.
 - **Keep pins in sync.** Pins are defined in `config.h` (main sketch) **and** at the top of `HardwareTest/HardwareTest.ino`. Change both.
