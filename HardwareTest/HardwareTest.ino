@@ -33,7 +33,7 @@ const int IR_CLOSE_LEVEL = HIGH;  // level OUT reads when the door is close (thi
 
 // Light sensors: 3.3V -> LDR -> pin -> 8k -> GND (brighter = higher, 0..4095)
 const int NUM_LDR = 3;
-const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB0};  // L1..L3
+const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1..L3
 
 // ---------------- State ----------------
 int speed = 100;  // 0..255, change with + / -
@@ -41,7 +41,7 @@ int speed = 100;  // 0..255, change with + / -
 Servo servos[2];
 int servoAngle[2] = {0, 0};  // assumed at power-up: every program ends with the servos at 0
 int sel = 0;                 // selected servo: 0 = servo 1, 1 = servo 2
-int servoStepMs = 20;        // ms per degree: higher = slower. 20 -> 180 deg in 3.6 s. 0 = full speed
+int servoStepMs = 12;        // ms per degree: higher = slower. 12 -> 180 deg in 2.2 s. 0 = full speed
 
 bool irWatch = false;
 bool lightWatch = false;
@@ -158,7 +158,6 @@ void printIr() {
 // ---------------- Light sensors ----------------
 int readLdr(int pin) {
   long sum = 0;
-  analogRead(pin);  // discard: first read after switching pins can carry over the last sensor
   for (int i = 0; i < 16; i++) sum += analogRead(pin);
   return sum / 16;
 }
