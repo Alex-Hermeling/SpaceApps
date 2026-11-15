@@ -91,6 +91,10 @@ void logSensors() {
 void setup() {
   Serial.begin(115200);
   delay(1500);  // give the Serial Monitor time to connect
+#if defined(ARDUINO_ARCH_STM32F1)
+  // Same as HardwareTest: free PA15/PB3/PB4 from JTAG (keeps SWD for ST-Link).
+  afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY);
+#endif
   motorsInit();
   sensorsInit();
   servoInit();  // assumes the servo is at SERVO_PARK_ANGLE (where the last run left it)

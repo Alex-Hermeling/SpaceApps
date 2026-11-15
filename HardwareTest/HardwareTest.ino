@@ -199,7 +199,7 @@ void printHelp() {
   Serial.println("  x  park BOTH servos at 0 (do this before powering off)");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
-  Serial.println("Light sensors (L1 PA4, L2 PA2, L3 PB0):");
+  Serial.println("Light sensors (L1 PA4, L2 PA2, L3 PB1):");
   Serial.println("  l  live readout on/off   k  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);

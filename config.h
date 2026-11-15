@@ -24,7 +24,7 @@ const int CIN2 = PB13;  // motor C direction
 // ---------------- Sensor pins ----------------
 // 3 light sensors: 3.3V -> LDR -> pin -> 8k -> GND  (brighter = higher value)
 const int NUM_LDR = 3;
-const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB0};  // L1..L3
+const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1..L3
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
 //   OUT: level set by IR_CLOSE_LEVEL when something reflective is close.
 //   Set the trigger distance with the module's potentiometer.
