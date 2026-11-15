@@ -40,7 +40,6 @@ On the Blue Pill, **G** = GND.
 | Photoresistor 1 | **PA4** | 3.3 → LDR → PA4 → 8 kΩ → G |
 | Photoresistor 2 | **PA2** | 3.3 → LDR → PA2 → 8 kΩ → G |
 | Photoresistor 3 | **PB0** | 3.3 → LDR → PB0 → 8 kΩ → G |
-| Photoresistor 4 | **PB1** | 3.3 → LDR → PB1 → 8 kΩ → G |
 
 Each photoresistor needs its own 8 kΩ resistor (4.7–22 kΩ also works). Brighter = higher reading (0–4095).
 
@@ -65,6 +64,7 @@ All grounds must be connected together.
 | Pin | Can do |
 |---|---|
 | PA3 | Digital, analog (ADC), PWM (timer 2) |
+| PB1 | Digital, analog (ADC). No PWM (timer 3 = servos) |
 | PB8, PB9 | Digital, PWM (timer 4) |
 | PB10, PB11 | Digital |
 | PA15, PB3, PB4 | Digital, only after disabling JTAG in code (see notes) |
@@ -79,7 +79,7 @@ All grounds must be connected together.
 | PC13, PC14, PC15 | Onboard LED and clock crystal; can only supply very little current |
 
 ## Rules and notes
-- **Timer 3 (PA6, PA7, PB0, PB1) belongs to the servos.** The servo library takes over that whole timer, so motor PWM must not use it. PB0 and PB1 are still fine for analog reads.
+- **Timer 3 (PA6, PA7, PB0, PB1) belongs to the servos.** The servo library takes over that whole timer, so motor PWM must not use it. PB0 (and free PB1) are still fine for analog reads.
 - **Analog pins max 3.3 V.** The ADC pins are not 5 V tolerant.
 - **PB3, PB4 and PA15 are JTAG pins.** With the Serial or ST-Link upload method the Roger Clark core leaves JTAG on, so the code must call `afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY);` at the start of `setup()` (HardwareTest does). That frees these pins and keeps SWD for ST-Link uploads.
 - **Keep pins in sync.** Pins are defined in `config.h` (main sketch) **and** at the top of `HardwareTest/HardwareTest.ino`. Change both.

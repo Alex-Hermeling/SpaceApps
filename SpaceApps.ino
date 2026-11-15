@@ -1,5 +1,5 @@
 // SpaceApps
-// STM32F103C8T6 "Blue Pill" + 2x TB6612FNG + 3 DC motors, 4 LDR light sensors, IR door sensor, 2 servos.
+// STM32F103C8T6 "Blue Pill" + 2x TB6612FNG + 3 DC motors, 3 LDR light sensors, IR door sensor, 2 servos.
 // Pins: pinout.md / config.h. Motor C is set up but not used by the mission yet.
 //
 // Mission (everything before unfurling):

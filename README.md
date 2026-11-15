@@ -7,7 +7,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 - 2× TB6612FNG motor drivers: driver #1 runs motors A + B (drive wheels), driver #2 runs motor C on channel A
 - 3× DC motors, 4× AA on VM
 - 2× servos
-- 4× LDR (photoresistor), each with an 8 kΩ resistor (4.7–22 kΩ works)
+- 3× LDR (photoresistor), each with an 8 kΩ resistor (4.7–22 kΩ works)
 - TCRT5000 IR reflective sensor module (3-pin) pointing at the door
 
 ## Files
@@ -17,7 +17,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 | `config.h` | Pins, thresholds, timings |
 | `motors.h` | Motors A + B (drive) and C |
 | `panel_servo.h` | Slow, non-blocking servo moves (both servos together) |
-| `sensors.h` | 4 light sensors (mission uses the average) and IR door sensor |
+| `sensors.h` | 3 light sensors (mission uses the average) and IR door sensor |
 
 ## Wiring
 See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin rules.
@@ -25,7 +25,7 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 ## Mission states
 | State | Moves on when |
 |---|---|
-| BOOT | 2 s of outside light (average of the 4 sensors) logged; servos assumed at 0° |
+| BOOT | 2 s of outside light (average of the 3 sensors) logged; servos assumed at 0° |
 | STOW_SERVO | Both servos slowly to the in-box angle (0°, so already there) |
 | WAIT_IN_BOX | Door within ~5 cm **and** light < 50% of outside, for 2 s; inside light logged |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
@@ -36,7 +36,7 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
 ## Hardware test (`HardwareTest/HardwareTest.ino`)
-A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR sensor and 4 light sensors. It uses the pins in [`pinout.md`](pinout.md). Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud, Newline):
+A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR sensor and 3 light sensors. It uses the pins in [`pinout.md`](pinout.md). Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud, Newline):
 
 | Key | Action | Key | Action |
 |---|---|---|---|
@@ -53,7 +53,7 @@ A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR se
 | `v` | Release selected servo (go limp) | `x` | Park **both** servos at 0° (before powering off) |
 | `,` | Servos slower | `.` | Servos faster |
 | `i` | IR live readout on/off | `p` | IR reading once |
-| `l` | Light live readout on/off (L1–L4 + average) | `k` | Light reading once |
+| `l` | Light live readout on/off (L1–L3 + average) | `k` | Light reading once |
 | `h` | Help | | |
 
 ## Servo rule

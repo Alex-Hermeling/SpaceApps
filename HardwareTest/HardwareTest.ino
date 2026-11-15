@@ -1,5 +1,5 @@
 // HardwareTest - standalone test for all SpaceApps hardware:
-// 3 motors (2 drivers), 2 servos, IR sensor, 4 light sensors.
+// 3 motors (2 drivers), 2 servos, IR sensor, 3 light sensors.
 // Open this file on its own in the Arduino IDE and upload it.
 // Serial Monitor: 115200 baud, line ending "Newline".
 //
@@ -32,7 +32,8 @@ const int IR_PIN = PA5;
 const int IR_CLOSE_LEVEL = HIGH;  // level OUT reads when the door is close (this module: HIGH)
 
 // Light sensors: 3.3V -> LDR -> pin -> 8k -> GND (brighter = higher, 0..4095)
-const int LDR_PINS[4] = {PA4, PA2, PB0, PB1};
+const int NUM_LDR = 3;
+const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB0};  // L1..L3
 
 // ---------------- State ----------------
 int speed = 100;  // 0..255, change with + / -
@@ -164,7 +165,7 @@ int readLdr(int pin) {
 void printLight() {
   long total = 0;
   Serial.print("LIGHT");
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < NUM_LDR; i++) {
     int v = readLdr(LDR_PINS[i]);
     total += v;
     Serial.print("  L"); Serial.print(i + 1); Serial.print("=");
@@ -173,7 +174,7 @@ void printLight() {
     if (v < 10)   Serial.print(' ');
     Serial.print(v);
   }
-  Serial.print("   avg="); Serial.println(total / 4);
+  Serial.print("   avg="); Serial.println(total / NUM_LDR);
 }
 
 // ---------------- Help ----------------
@@ -198,7 +199,7 @@ void printHelp() {
   Serial.println("  x  park BOTH servos at 0 (do this before powering off)");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
-  Serial.println("Light sensors (L1 PA4, L2 PA2, L3 PB0, L4 PB1):");
+  Serial.println("Light sensors (L1 PA4, L2 PA2, L3 PB0):");
   Serial.println("  l  live readout on/off   k  print once");
   Serial.println("  h  this help");
   Serial.print("Speed: "); Serial.print(speed);

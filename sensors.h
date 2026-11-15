@@ -1,4 +1,4 @@
-// sensors.h - 4 LDR light sensors and TCRT5000 IR door sensor.
+// sensors.h - 3 LDR light sensors and TCRT5000 IR door sensor.
 #pragma once
 #include "config.h"
 
@@ -10,14 +10,14 @@ inline void sensorsInit() {
   pinMode(IR_PIN, INPUT_PULLUP);
 }
 
-// One light sensor (0 = L1 .. 3 = L4), 0 (dark) .. 4095 (bright), averaged over 16 samples.
+// One light sensor (0 = L1 .. 2 = L3), 0 (dark) .. 4095 (bright), averaged over 16 samples.
 inline int readLightSensor(int i) {
   long sum = 0;
   for (int k = 0; k < 16; k++) sum += analogRead(LDR_PINS[i]);
   return sum / 16;
 }
 
-// Light level used by the mission: average of all 4 sensors.
+// Light level used by the mission: average of all 3 sensors.
 inline int readLight() {
   long sum = 0;
   for (int i = 0; i < NUM_LDR; i++) sum += readLightSensor(i);
