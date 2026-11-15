@@ -13,6 +13,7 @@ inline void sensorsInit() {
 // One light sensor (0 = L1 .. 2 = L3), 0 (dark) .. 4095 (bright), averaged over 16 samples.
 inline int readLightSensor(int i) {
   long sum = 0;
+  analogRead(LDR_PINS[i]);  // discard: first read after switching pins can carry over the last sensor
   for (int k = 0; k < 16; k++) sum += analogRead(LDR_PINS[i]);
   return sum / 16;
 }

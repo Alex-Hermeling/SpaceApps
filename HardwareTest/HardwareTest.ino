@@ -158,6 +158,7 @@ void printIr() {
 // ---------------- Light sensors ----------------
 int readLdr(int pin) {
   long sum = 0;
+  analogRead(pin);  // discard: first read after switching pins can carry over the last sensor
   for (int i = 0; i < 16; i++) sum += analogRead(pin);
   return sum / 16;
 }
