@@ -11,7 +11,7 @@
 // ---------------- Pins ----------------
 // Motor driver #1 (TB6612FNG, 2 channels)
 const int PWMA = PA0;   // motor A speed (timer 2)
-const int AIN1 = PA15;
+const int AIN1 = PB15;
 const int AIN2 = PB14;
 const int PWMB = PA1;   // motor B speed (timer 2)
 const int BIN1 = PB6;
@@ -214,7 +214,7 @@ void setup() {
   delay(1500);
 
 #if defined(ARDUINO_ARCH_STM32F1)
-  // Free PA15, PB3, PB4 from JTAG so they work as normal pins (AIN1 is on PA15).
+  // Free PA15, PB3, PB4 from JTAG so they work as normal pins if ever used.
   // With "Serial" or "STLink" upload the Roger Clark core leaves JTAG on.
   // SW_ONLY keeps SWD (PA13/PA14), so ST-Link uploads still work.
   afio_cfg_debug_ports(AFIO_DEBUG_SW_ONLY);

@@ -7,7 +7,7 @@ On the Blue Pill, **G** = GND.
 | Driver pin | Blue Pill | Notes |
 |---|---|---|
 | PWMA | **PA0** | Motor A speed (PWM, timer 2) |
-| AIN1 | **PA15** | Motor A direction |
+| AIN1 | **PB15** | Motor A direction |
 | AIN2 | **PB14** | Motor A direction |
 | PWMB | **PA1** | Motor B speed (PWM, timer 2) |
 | BIN1 | **PB6** | Motor B direction |
@@ -65,7 +65,8 @@ All grounds must be connected together.
 |---|---|
 | PA3 | Digital, analog (ADC), PWM (timer 2) |
 | PB8, PB9 | Digital, PWM (timer 4) |
-| PB3, PB4, PB10, PB11, PB15 | Digital |
+| PB10, PB11 | Digital |
+| PA15, PB3, PB4 | Digital, only after disabling JTAG in code (see notes) |
 
 ## Do not use
 | Pin | Why |
