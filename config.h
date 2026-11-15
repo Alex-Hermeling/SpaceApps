@@ -51,6 +51,12 @@ const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 d
 // ---------------- Thresholds ----------------
 const float IN_BOX_FRACTION = 0.5;  // in box when light < outside light * this
 
+// Sandstorm (test: lights dim over ~10 s, then go off). All relative to lightSurface,
+// the light logged while standing still after driving out.
+const float STORM_DIM_FRACTION   = 0.75;  // below this = "dimming" (log message only)
+const float STORM_DARK_FRACTION  = 0.3;   // below this = dark. Raise if the room never gets this dark
+const float STORM_CLEAR_FRACTION = 0.6;   // above this = sandstorm over
+
 // ---------------- Timings (ms) ----------------
 const unsigned long LIGHT_SAMPLE_MS  = 2000;   // BOOT: average outside light over this long
 const unsigned long STABLE_MS        = 2000;   // condition must hold this long to count
@@ -59,6 +65,8 @@ const unsigned long DOOR_SETTLE_MS   = 5000;   // wait after door opens before d
 const unsigned long CLEAR_EXTRA_MS   = 5000;   // keep driving after "outside" - raise to go further out
 const unsigned long DRIVE_MAX_MS     = 20000;  // safety: never drive longer than this (keep > ~2 s + exit time + CLEAR_EXTRA_MS)
 const unsigned long STABLE_WAIT_MS   = 3000;   // stand still before unfurling
+const unsigned long STORM_DARK_MS    = 15000;  // dark this long = sandstorm -> furl
+const unsigned long STORM_CLEAR_MS   = 10000;  // light back this long = storm over -> unfurl
 const unsigned long LOG_EVERY_MS     = 500;
 
 // ---------------- Speeds (0..255) ----------------
