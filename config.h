@@ -49,10 +49,11 @@ const bool SERVO_REVERSED[NUM_SERVOS] = {true, true};
 
 // All angles below are PANEL angles (0 = furled/closed, 180 = unfurled); the
 // mirroring above turns them into the real angle for each servo.
-// Servo convention: the program always ENDS furled (SERVO_PARK_ANGLE),
-// so at power-up we ASSUME the panel is there (its real position can't be read).
-// Real angles at boot: both servos at 180.
-const int SERVO_PARK_ANGLE = 0;   // start + end position (furled)
+// Servo convention: at power-up we ASSUME the panel is furled (SERVO_PARK_ANGLE),
+// because its real position can't be read. Real angles at boot: both servos at 180.
+// The mission ends UNFURLED (never refurls), so furl it by hand before the next run
+// ('f' in the main sketch's Serial Monitor, or 'x' in HardwareTest).
+const int SERVO_PARK_ANGLE = 0;   // start position (furled)
 const int SERVO_STOW_ANGLE = 0;   // position while in the box (furled)
 const int SERVO_UNFURL_ANGLE = 180;  // unfurl: both servos 180 -> 0
 const int SERVO_FURL_ANGLE   = 0;    // furl:   both servos 0 -> 180 (= park)
@@ -70,14 +71,6 @@ const float IN_BOX_FRACTION = 0.5;  // in box when L1+L2 light < outside light *
 // broken sensor) and left out of every light decision. Real darkness reads ~400 with 8k.
 const int LDR_MIN_VALID = 50;
 
-// Sandstorm: checked PER SENSOR, each against its own surface light
-// (logged while standing still after driving out). ANY one sensor dark -> furl.
-// A loose LDR floats at ~1000-2000, so keep "dark" below ~1000 (lit ~3000 * 0.3 = ~900)
-// or a loose sensor could fake a sandstorm.
-const float STORM_DIM_FRACTION   = 0.75;  // below this = "dimming" (log message only)
-const float STORM_DARK_FRACTION  = 0.3;   // below this = dark
-const float STORM_CLEAR_FRACTION = 0.6;   // the sensor that went dark is above this = sandstorm over
-
 // ---------------- Timings (ms) ----------------
 const unsigned long LIGHT_SAMPLE_MS  = 2000;   // BOOT: average outside light over this long
 const unsigned long STABLE_MS        = 2000;   // condition must hold this long to count
@@ -85,8 +78,6 @@ const unsigned long DOOR_DEBOUNCE_MS = 1000;   // door must read "open" this lon
 const unsigned long DOOR_SETTLE_MS   = 5000;   // wait after door opens before driving
 const unsigned long DRIVE_TIME_MS    = 2500;   // DRIVE_OUT: drive this long, then stop - raise to go further
 const unsigned long STABLE_WAIT_MS   = 3000;   // stand still before unfurling
-const unsigned long STORM_DARK_MS    = 2000;   // any one sensor dark this long = sandstorm -> furl
-const unsigned long STORM_CLEAR_MS   = 10000;  // that sensor light again this long = storm over -> unfurl
 const unsigned long LOG_EVERY_MS     = 500;
 
 // ---------------- Speeds (0..255) ----------------

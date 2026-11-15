@@ -4,16 +4,13 @@
 //
 // Mission:
 //   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
-//        -> STABILIZE -> PARK_SERVO -> UNFURL (0 -> 180) -> UNFURLED
-//        -> FURL (180 -> 0) -> FURLED -> UNFURL ... (loop)
+//        -> STABILIZE -> PARK_SERVO -> UNFURL -> UNFURLED (final: stays unfurled, never refurls)
 // In-box check uses L1 (rear) + L2 (side) only (front sensor L3 ignored); the door itself is the IR sensor.
-// Sandstorm = ANY one light sensor dark (vs. its own surface light, logged in STABILIZE)
-// for STORM_DARK_MS -> furl. That same sensor light again for STORM_CLEAR_MS -> unfurl. Loops.
-// Manual override in the Serial Monitor: 'f' = furl, 'u' = unfurl.
 //
-// Servo rule: the program always ends with both servos at SERVO_PARK_ANGLE (0),
-// so at power-up it is assumed to be there. STOW_SERVO / PARK_SERVO make sure it is
-// at SERVO_STOW_ANGLE before the box and back at SERVO_PARK_ANGLE at the end.
+// Servo rule: at power-up the panel is assumed FURLED (both servos at 180).
+// The mission ends unfurled, so before the next run furl it by hand:
+// type 'f' in the Serial Monitor (-> FURL -> FURLED), or press 'x' in HardwareTest.
+// 'u' in FURLED unfurls again.
 //
 // Pins, thresholds and timings: config.h
 // Motor control: motors.h    Sensors: sensors.h    Servo: panel_servo.h
@@ -58,14 +55,14 @@ const LedPattern LED_PATTERNS[] = {
   {3, 100, 150, 900},  // STABILIZE       triple blink
   {1,  50,  50,   0},  // PARK_SERVO      flicker (servos moving)
   {1,  50,  50,   0},  // UNFURL          flicker (servos moving)
-  {1,  50,1950,   0},  // UNFURLED        short heartbeat every 2 s
-  {1,  50,  50,   0},  // FURL            flicker (servos moving)
-  {1,1000,1000,   0},  // FURLED          slow 1 s on / 1 s off
+  {1,  50,1950,   0},  // UNFURLED        short heartbeat every 2 s (mission done)
+  {1,  50,  50,   0},  // FURL            flicker (servos moving, manual 'f')
+  {1,1000,1000,   0},  // FURLED          slow 1 s on / 1 s off (safe to power off)
 };
 static_assert(sizeof(LED_PATTERNS) / sizeof(LED_PATTERNS[0]) == FURLED + 1,
               "LED_PATTERNS needs one entry per State");
 
-// Serial command for the panel: 'f' = furl, 'u' = unfurl, 0 = none (manual override).
+// Serial command for the panel: 'f' = furl, 'u' = unfurl, 0 = none (manual only).
 char readPanelCommand() {
   while (Serial.available()) {
     char c = Serial.read();
@@ -82,23 +79,12 @@ unsigned long lastLog    = 0;
 // Light readings logged during the mission
 int lightOutside   = 0;
 int lightInside    = 0;
-int lightSurface[NUM_LDR] = {0};   // per sensor, where the rover stopped (sandstorm reference)
-bool surfaceLogged = false;
 bool doorOpened    = false;   // latched once the door is seen opening: IR ignored after that
-bool dimmingLogged = false;
-
-// Sandstorm: per-sensor dark timers, and which sensor triggered the furl (-1 = manual)
-unsigned long darkSince[NUM_LDR] = {0};
-int stormSensor = -1;
 
 // BOOT averaging
 unsigned long bootSum   = 0;
 unsigned long bootCount = 0;
 unsigned long lastSample = 0;
-
-// STABILIZE averaging, per sensor
-unsigned long surfSum[NUM_LDR] = {0};
-unsigned long surfCount = 0;
 
 void enterState(State s) {
   state = s;
@@ -150,16 +136,7 @@ void logSensors() {
   Serial.print("  door=");
   if (doorOpened) Serial.print("open (IR ignored)");
   else            Serial.print(doorClosed() ? "closed" : "open");
-  Serial.print("  servo=");  Serial.print(servoAngle);
-  if (surfaceLogged) {
-    Serial.print("  surface=[");
-    for (int i = 0; i < NUM_LDR; i++) {
-      if (i) Serial.print(' ');
-      Serial.print(lightSurface[i]);
-    }
-    Serial.print(']');
-  }
-  Serial.println();
+  Serial.print("  servo=");  Serial.println(servoAngle);
 }
 
 void setup() {
@@ -244,36 +221,15 @@ void runMission() {
       if (inState() >= DRIVE_TIME_MS) {
         brakeAll();
         Serial.println("Out of the box");
-        for (int i = 0; i < NUM_LDR; i++) surfSum[i] = 0;
-        surfCount = 0;
         enterState(STABILIZE);
       }
       break;
 
     case STABILIZE:
-      // Stand still before unfurling, and log each sensor's light as its sandstorm reference.
+      // Stand still before unfurling.
       brakeAll();
-      if (millis() - lastSample >= 10) {
-        lastSample = millis();
-        for (int i = 0; i < NUM_LDR; i++) surfSum[i] += readLightSensor(i);
-        surfCount++;
-      }
       if (inState() >= STABLE_WAIT_MS) {
         stopMotors();
-        Serial.print("Logged light SURFACE = [");
-        for (int i = 0; i < NUM_LDR; i++) {
-          lightSurface[i] = surfSum[i] / surfCount;
-          if (i) Serial.print(' ');
-          Serial.print(lightSurface[i]);
-        }
-        Serial.println("]  (L1 rear, L2 side, L3 front)");
-        for (int i = 0; i < NUM_LDR; i++) {
-          if (!ldrValid(lightSurface[i])) {
-            Serial.print("WARNING: L"); Serial.print(i + 1);
-            Serial.println(" reads invalid - it is ignored for sandstorm detection");
-          }
-        }
-        surfaceLogged = true;
         servoMoveTo(SERVO_PARK_ANGLE);
         enterState(PARK_SERVO);
       }
@@ -289,85 +245,38 @@ void runMission() {
       break;
 
     case UNFURL:
-      // Both servos 0 -> 180, slowly.
+      // Both servos slowly 180 -> 0 (open).
       if (servoAtTarget()) {
-        Serial.println("UNFURLED - watching for sandstorm ('f' = furl now)");
-        dimmingLogged = false;
-        for (int i = 0; i < NUM_LDR; i++) darkSince[i] = 0;
+        Serial.println("UNFURLED - mission complete, the panel stays open.");
+        Serial.println("Before the next run, type 'f' to furl (the next power-up assumes furled).");
         enterState(UNFURLED);
       }
       break;
 
-    case UNFURLED: {
-      // Sandstorm: ANY one sensor dark (vs. its own surface light) for STORM_DARK_MS -> furl.
-      bool anyDim = false;
-      int darkSensor = -1;
-      unsigned long now = millis();
-      for (int i = 0; i < NUM_LDR; i++) {
-        int v = readLightSensor(i);
-        // Skip sensors that read invalid now, or were invalid when the surface light was
-        // logged: a loose / shorted sensor must not fake a sandstorm.
-        if (!ldrValid(v) || !ldrValid(lightSurface[i])) { darkSince[i] = 0; continue; }
-        if (v < lightSurface[i] * STORM_DIM_FRACTION) anyDim = true;
-        if (v < lightSurface[i] * STORM_DARK_FRACTION) {
-          if (darkSince[i] == 0) darkSince[i] = now ? now : 1;
-          if (darkSensor < 0 && now - darkSince[i] >= STORM_DARK_MS) darkSensor = i;
-        } else {
-          darkSince[i] = 0;
-        }
-      }
-      if (anyDim && !dimmingLogged) Serial.println("Light dimming...");
-      dimmingLogged = anyDim;
-
-      if (darkSensor >= 0) {
-        stormSensor = darkSensor;
-        Serial.print("SANDSTORM (L"); Serial.print(stormSensor + 1); Serial.println(" dark) - furling");
-        servoMoveTo(SERVO_FURL_ANGLE);
-        enterState(FURL);
-      } else if (readPanelCommand() == 'f') {
-        stormSensor = -1;
+    case UNFURLED:
+      // Final state: stays unfurled, never refurls on its own. 'f' = manual furl for packing up.
+      if (readPanelCommand() == 'f') {
         Serial.println("Manual furl");
         servoMoveTo(SERVO_FURL_ANGLE);
         enterState(FURL);
       }
       break;
-    }
 
     case FURL:
-      // Both servos 180 -> 0, slowly. Ends at 0, so the next power-up can assume it.
+      // Manual furl only: both servos slowly back to 180 (closed).
       if (servoAtTarget()) {
-        Serial.print("FURLED (servos at 0, safe to power off) - ");
-        if (stormSensor >= 0) {
-          Serial.print("waiting for L"); Serial.print(stormSensor + 1); Serial.println(" to see light ('u' = unfurl now)");
-        } else {
-          Serial.println("send 'u' to unfurl");
-        }
+        Serial.println("FURLED (servos at 180) - safe to power off. 'u' = unfurl again");
         enterState(FURLED);
       }
       break;
 
-    case FURLED: {
-      // Sandstorm over: the sensor that went dark sees light again for STORM_CLEAR_MS -> unfurl.
-      // After a manual furl (stormSensor = -1) only 'u' unfurls.
-      bool overNow = false;
-      if (stormSensor >= 0) {
-        // An invalid reading (< LDR_MIN_VALID) is never "clear". If that sensor breaks
-        // while furled, the rover stays furled until 'u'.
-        int v = readLightSensor(stormSensor);
-        bool clear = ldrValid(v) && v > lightSurface[stormSensor] * STORM_CLEAR_FRACTION;
-        overNow = heldFor(clear, STORM_CLEAR_MS);
-      }
-      if (overNow || readPanelCommand() == 'u') {
-        if (overNow) {
-          Serial.print("Sandstorm over (L"); Serial.print(stormSensor + 1); Serial.println(" light) - unfurling");
-        } else {
-          Serial.println("Manual unfurl");
-        }
+    case FURLED:
+      if (readPanelCommand() == 'u') {
+        Serial.println("Manual unfurl");
         servoMoveTo(SERVO_UNFURL_ANGLE);
         enterState(UNFURL);
       }
       break;
-    }
   }
 
   servoUpdate();  // step the servos towards their target
