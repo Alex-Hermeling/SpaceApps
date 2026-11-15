@@ -68,25 +68,27 @@ Never connect the battery to the Blue Pill. Power it from USB or an ST-Link.
 | READY_TO_UNFURL | Next step to build: unfurl panels |
 
 ## Hardware test (`HardwareTest/HardwareTest.ino`)
-A separate sketch to test the motors, servo, IR sensor and light sensor on their own. Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud):
+A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR sensor and 4 light sensors. It uses the pins in [`pinout.md`](pinout.md). Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud, Newline):
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `f` | Both forward | `r` | Both reverse |
+| `f` | Motors A+B forward | `r` | Motors A+B reverse |
 | `a` | Motor A forward | `z` | Motor A reverse |
 | `b` | Motor B forward | `n` | Motor B reverse |
-| `s` | Brake | `c` | Coast |
+| `m` | Motor C forward | `u` | Motor C reverse |
+| `s` | Brake all | `c` | Coast all |
 | `+` | Faster | `-` | Slower |
-| `t` | Auto test sequence | `d` | Diagnose (full speed, PWM bypassed) |
-| `0`–`180` + Enter | Servo to that angle | `w` | Servo sweep 0–180–0 |
-| `]` | Servo +10° | `[` | Servo −10° |
-| `v` | Release servo (go limp) | `h` | Help |
-| `,` | Servo slower | `.` | Servo faster |
-| `x` | Park servo at 0° (before powering off) | | |
+| `t` | Auto test sequence | `d` | Diagnose (all 3 full speed, PWM bypassed) |
+| `o` | Switch selected servo (1 ↔ 2) | | |
+| `0`–`180` + Enter | Selected servo to that angle | `w` | Selected servo sweep 0–180–0 |
+| `]` | Selected servo +10° | `[` | Selected servo −10° |
+| `v` | Release selected servo (go limp) | `x` | Park **both** servos at 0° (before powering off) |
+| `,` | Servos slower | `.` | Servos faster |
 | `i` | IR live readout on/off | `p` | IR reading once |
-| `l` | Light live readout on/off | `k` | Light reading once |
+| `l` | Light live readout on/off (L1–L4 + average) | `k` | Light reading once |
+| `h` | Help | | |
 
-Its pins are copied from `config.h`, so keep them the same if you change them.
+The main sketch (`config.h`) does **not** use the new pinout yet.
 
 ## Servo rule
 Every program ends with the servo at **0°**, so at power-up the code assumes it is at 0° (`SERVO_PARK_ANGLE` in config.h). The mission makes sure it is at 0° before entering the box and at the end. In HardwareTest, press `x` before powering off. If a run is cut short (reset or power off) with the servo elsewhere, it snaps to 0° at the next power-up.
