@@ -43,10 +43,10 @@ A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR se
 
 | Key | Action | Key | Action |
 |---|---|---|---|
-| `f` | Motors A+B forward | `r` | Motors A+B reverse |
+| `g` | Motors A+B forward | `r` | Motors A+B reverse |
 | `a` | Motor A forward | `z` | Motor A reverse |
 | `b` | Motor B forward | `n` | Motor B reverse |
-| `m` | Motor C forward | `u` | Motor C reverse |
+| `m` | Motor C forward | `y` | Motor C reverse |
 | `s` | Brake all | `c` | Coast all |
 | `+` | Faster | `-` | Slower |
 | `t` | Auto test sequence | `d` | Diagnose (all 3 full speed, PWM bypassed) |
@@ -54,6 +54,7 @@ A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR se
 | `0`–`180` + Enter | Selected servo to that angle | `w` | Selected servo sweep 0–180–0 |
 | `]` | Selected servo +10° | `[` | Selected servo −10° |
 | `v` | Release selected servo (go limp) | `x` | Park **both** servos at 0° (before powering off) |
+| `u` | Unfurl: **both** servos 0° → 180° | `f` | Furl: **both** servos 180° → 0° |
 | `,` | Servos slower | `.` | Servos faster |
 | `i` | IR live readout on/off | `p` | IR reading once |
 | `l` | Light live readout on/off (L1–L3 + average) | `k` | Light reading once |

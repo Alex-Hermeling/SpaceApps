@@ -129,6 +129,19 @@ void servoTo(int n, int angle) {
   servos[n].write(servoAngle[n]);
 }
 
+// Move BOTH servos together, slowly (same as the main sketch's unfurl / furl).
+void servosBothTo(int angle) {
+  angle = constrain(angle, 0, 180);
+  for (int n = 0; n < 2; n++) if (!servos[n].attached()) servos[n].attach(SERVO_PINS[n]);
+  while (servoAngle[0] != angle || servoAngle[1] != angle) {
+    for (int n = 0; n < 2; n++) {
+      if (servoAngle[n] != angle) servoAngle[n] += (angle > servoAngle[n]) ? 1 : -1;
+      servos[n].write(servoAngle[n]);
+    }
+    delay(servoStepMs);
+  }
+}
+
 void servoSweep(int n) {
   Serial.print("Servo "); Serial.print(n + 1); Serial.println(" sweep 0 -> 180 -> 0");
   servoTo(n, 0);
@@ -182,10 +195,10 @@ void printHelp() {
   Serial.println();
   Serial.println("=== SpaceApps HardwareTest ===");
   Serial.println("Motors (A, B = driver 1, C = driver 2):");
-  Serial.println("  f  A+B forward        r  A+B reverse");
+  Serial.println("  g  A+B forward        r  A+B reverse");
   Serial.println("  a  motor A forward    z  motor A reverse");
   Serial.println("  b  motor B forward    n  motor B reverse");
-  Serial.println("  m  motor C forward    u  motor C reverse");
+  Serial.println("  m  motor C forward    y  motor C reverse");
   Serial.println("  s  stop all (brake)   c  stop all (coast)");
   Serial.println("  +  faster             -  slower");
   Serial.println("  t  auto test sequence (A, B, C, then A+B)");
@@ -197,6 +210,7 @@ void printHelp() {
   Serial.println("  w  sweep 0-180-0      v  release (go limp)");
   Serial.println("  ,  servo slower       .  servo faster");
   Serial.println("  x  park BOTH servos at 0 (do this before powering off)");
+  Serial.println("  u  unfurl: BOTH servos 0 -> 180   f  furl: BOTH servos 180 -> 0");
   Serial.println("IR sensor (OUT PA5):");
   Serial.println("  i  live readout on/off   p  print once");
   Serial.println("Light sensors (L1 PA4, L2 PA2, L3 PB1):");
@@ -273,6 +287,8 @@ void loop() {
     case 'w': servoSweep(sel); break;
     case 'v': servos[sel].detach(); Serial.print("Servo "); Serial.print(sel + 1); Serial.println(" released"); break;
     case 'x': servoTo(0, 0); servoTo(1, 0); Serial.println("Both servos parked at 0 - safe to power off"); break;
+    case 'u': Serial.println("Unfurl: both servos -> 180"); servosBothTo(180); Serial.println("Unfurled"); break;
+    case 'f': Serial.println("Furl: both servos -> 0");     servosBothTo(0);   Serial.println("Furled - safe to power off"); break;
     case ',': servoStepMs = (servoStepMs == 0) ? 5 : min(servoStepMs * 2, 200); printServoSpeed(); break;
     case '.': servoStepMs = (servoStepMs <= 5) ? 0 : servoStepMs / 2;           printServoSpeed(); break;
 
@@ -283,14 +299,14 @@ void loop() {
     case 'k': printLight(); break;
 
     // Motors
-    case 'f': Serial.println("A+B forward");     motorA(speed);  motorB(speed);  break;
+    case 'g': Serial.println("A+B forward");     motorA(speed);  motorB(speed);  break;
     case 'r': Serial.println("A+B reverse");     motorA(-speed); motorB(-speed); break;
     case 'a': Serial.println("Motor A forward"); motorA(speed);  break;
     case 'z': Serial.println("Motor A reverse"); motorA(-speed); break;
     case 'b': Serial.println("Motor B forward"); motorB(speed);  break;
     case 'n': Serial.println("Motor B reverse"); motorB(-speed); break;
     case 'm': Serial.println("Motor C forward"); motorC(speed);  break;
-    case 'u': Serial.println("Motor C reverse"); motorC(-speed); break;
+    case 'y': Serial.println("Motor C reverse"); motorC(-speed); break;
     case 's': Serial.println("Brake all");       brakeAll();     break;
     case 'c': Serial.println("Coast all");       coastAll();     break;
     case '+': speed = min(speed + 25, 255); Serial.print("Speed: "); Serial.println(speed); break;
