@@ -34,6 +34,8 @@ const int IR_CLOSE_LEVEL = HIGH;  // level OUT reads when the door is close (thi
 // Light sensors: 3.3V -> LDR -> pin -> 8k -> GND (brighter = higher, 0..4095)
 const int NUM_LDR = 3;
 const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
+const char* LDR_NAMES[NUM_LDR] = {"rear", "side", "front"};
+const int FRONT_LDR = 2;  // L3: ignored for the in-box check in the main sketch
 
 // ---------------- State ----------------
 int speed = 100;  // 0..255, change with + / -
@@ -175,19 +177,24 @@ int readLdr(int pin) {
   return sum / 16;
 }
 
+// Prints each sensor with its position, plus "box" = the light the main sketch
+// uses for the in-box check (all sensors except the front one).
 void printLight() {
-  long total = 0;
+  long total = 0, box = 0;
   Serial.print("LIGHT");
   for (int i = 0; i < NUM_LDR; i++) {
     int v = readLdr(LDR_PINS[i]);
     total += v;
-    Serial.print("  L"); Serial.print(i + 1); Serial.print("=");
+    if (i != FRONT_LDR) box += v;
+    Serial.print("  L"); Serial.print(i + 1);
+    Serial.print(' '); Serial.print(LDR_NAMES[i]); Serial.print("=");
     if (v < 1000) Serial.print(' ');
     if (v < 100)  Serial.print(' ');
     if (v < 10)   Serial.print(' ');
     Serial.print(v);
   }
-  Serial.print("   avg="); Serial.println(total / NUM_LDR);
+  Serial.print("   avg="); Serial.print(total / NUM_LDR);
+  Serial.print("   box(L1+L2)="); Serial.println(box / (NUM_LDR - 1));
 }
 
 // ---------------- Help ----------------

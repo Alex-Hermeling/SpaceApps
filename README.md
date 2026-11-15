@@ -59,7 +59,7 @@ A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR se
 | `u` | Unfurl: **both** servos 0° → 180° | `f` | Furl: **both** servos 180° → 0° |
 | `,` | Servos slower | `.` | Servos faster |
 | `i` | IR live readout on/off | `p` | IR reading once |
-| `l` | Light live readout on/off (L1–L3 + average) | `k` | Light reading once |
+| `l` | Light live readout on/off (L1 rear, L2 side, L3 front, average, box = L1+L2) | `k` | Light reading once |
 | `h` | Help | | |
 
 ## Servo rule
