@@ -69,6 +69,7 @@ A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR se
 | `s` | Brake all | `c` | Coast all |
 | `+` | Faster | `-` | Slower |
 | `t` | Auto test sequence | `d` | Diagnose (all 3 full speed, PWM bypassed) |
+| `e` | Read STBY pin (PB5): HIGH = drivers enabled, LOW = standby | | |
 | `o` | Switch selected servo (1 ↔ 2) | | |
 | `0`–`180` + Enter | Selected servo to that angle | `w` | Selected servo sweep furled → unfurled → furled |
 | `]` | Selected servo +10° | `[` | Selected servo −10° |

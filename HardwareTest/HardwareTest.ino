@@ -168,6 +168,16 @@ void printSelected() {
 }
 
 // ---------------- IR sensor ----------------
+// ---------------- Standby (STBY) ----------------
+// Reads the real level on the STBY pin (PB5). The code always drives it HIGH, so LOW
+// here means something is pulling it down (short to GND, wrong wire, overloaded pin).
+void printStby() {
+  int s = digitalRead(STBY);
+  Serial.print("STBY (PB5) = "); Serial.print(s == HIGH ? "HIGH" : "LOW");
+  Serial.println(s == HIGH ? "   drivers enabled"
+                           : "   drivers in STANDBY - motors can't run! Check the STBY wire / short to GND");
+}
+
 void printIr() {
   int d = digitalRead(IR_PIN);
   Serial.print("IR  OUT="); Serial.print(d);
@@ -224,6 +234,7 @@ void printHelp() {
   Serial.println("  +  faster             -  slower");
   Serial.println("  t  auto test sequence (A, B, C, then A+B)");
   Serial.println("  d  diagnose (all 3 full speed, PWM bypassed)");
+  Serial.println("  e  read STBY pin (PB5): HIGH = drivers enabled, LOW = standby");
   Serial.println("Servos (1 = PB0, 2 = PA7) - commands act on the selected servo:");
   Serial.println("  o  switch selected servo (1 <-> 2)");
   Serial.println("  0..180  type an angle + Enter, e.g. 45");
@@ -334,6 +345,7 @@ void loop() {
     case '-': speed = max(speed - 25, 0);   Serial.print("Speed: "); Serial.println(speed); break;
     case 't': autoSequence(); break;
     case 'd': diagnose();     break;
+    case 'e': printStby();    break;
 
     case 'h': printHelp();    break;
     default:  Serial.print("Unknown command: "); Serial.println(cmd); printHelp();
