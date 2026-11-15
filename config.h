@@ -22,7 +22,9 @@ const int CIN1 = PB12;  // motor C direction
 const int CIN2 = PB13;  // motor C direction
 
 // ---------------- Sensor pins ----------------
-// 3 light sensors: 3.3V -> LDR -> pin -> 8k -> GND  (brighter = higher value)
+// 3 light sensors: 3.3V -> LDR -> pin -> resistor -> GND  (brighter = higher value)
+// Resistor: L1 = 33k (for now), L2 + L3 = 8k. Logic compares each sensor to its own
+// readings, so different resistors are fine.
 const int NUM_LDR = 3;
 const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
 const int FRONT_LDR = 2;  // L3 (PB1) = front sensor: ignored for the in-box check

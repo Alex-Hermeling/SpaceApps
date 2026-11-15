@@ -7,7 +7,7 @@ Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a 
 - 2× TB6612FNG motor drivers: driver #1 runs motors A + B (drive wheels), driver #2 runs motor C on channel A
 - 3× DC motors, 4× AA on VM
 - 2× servos
-- 3× LDR (photoresistor), each with an 8 kΩ resistor (4.7–22 kΩ works)
+- 3× LDR (photoresistor), each with its own resistor: L1 33 kΩ (for now), L2 and L3 8 kΩ
 - TCRT5000 IR reflective sensor module (3-pin) pointing at the door
 
 ## Files
