@@ -17,11 +17,18 @@ inline int readLightSensor(int i) {
   return sum / 16;
 }
 
-// Light level used by the mission: average of all 3 sensors.
+// Average of all 3 sensors (logging only).
 inline int readLight() {
   long sum = 0;
   for (int i = 0; i < NUM_LDR; i++) sum += readLightSensor(i);
   return sum / NUM_LDR;
+}
+
+// Light for the in-box check: average of all sensors except the front one (FRONT_LDR).
+inline int readBoxLight() {
+  long sum = 0;
+  for (int i = 0; i < NUM_LDR; i++) if (i != FRONT_LDR) sum += readLightSensor(i);
+  return sum / (NUM_LDR - 1);
 }
 
 // TCRT5000 output: IR_CLOSE_LEVEL = something close.

@@ -6,8 +6,9 @@
 //   BOOT -> STOW_SERVO -> WAIT_IN_BOX -> WAIT_DOOR_OPEN -> DOOR_SETTLE -> DRIVE_OUT
 //        -> STABILIZE -> PARK_SERVO -> UNFURL (0 -> 180) -> UNFURLED
 //        -> FURL (180 -> 0) -> FURLED -> UNFURL ... (loop)
-// Sandstorm = light dark (vs. lightSurface, logged in STABILIZE) for STORM_DARK_MS -> furl.
-// Light back for STORM_CLEAR_MS -> unfurl again. Loops forever.
+// In-box check uses L2 + L3 only (front sensor L1 ignored); the door itself is the IR sensor.
+// Sandstorm = ANY one light sensor dark (vs. its own surface light, logged in STABILIZE)
+// for STORM_DARK_MS -> furl. That same sensor light again for STORM_CLEAR_MS -> unfurl. Loops.
 // Manual override in the Serial Monitor: 'f' = furl, 'u' = unfurl.
 //
 // Servo rule: the program always ends with both servos at SERVO_PARK_ANGLE (0),
@@ -43,8 +44,7 @@ const char* STATE_NAMES[] = {
   "DRIVE_OUT", "STABILIZE", "PARK_SERVO", "UNFURL", "UNFURLED", "FURL", "FURLED"
 };
 
-// Serial command for the panel: 'f' = furl, 'u' = unfurl, 0 = none.
-// Stand-in for sandstorm detection, which isn't built yet.
+// Serial command for the panel: 'f' = furl, 'u' = unfurl, 0 = none (manual override).
 char readPanelCommand() {
   while (Serial.available()) {
     char c = Serial.read();
@@ -61,14 +61,22 @@ unsigned long lastLog    = 0;
 // Light readings logged during the mission
 int lightOutside   = 0;
 int lightInside    = 0;
-int lightThreshold = 0;   // halfway between inside and outside
-int lightSurface   = 0;   // light where the rover stopped (sandstorm reference)
+int lightSurface[NUM_LDR] = {0};   // per sensor, where the rover stopped (sandstorm reference)
+bool surfaceLogged = false;
 bool dimmingLogged = false;
+
+// Sandstorm: per-sensor dark timers, and which sensor triggered the furl (-1 = manual)
+unsigned long darkSince[NUM_LDR] = {0};
+int stormSensor = -1;
 
 // BOOT averaging
 unsigned long bootSum   = 0;
 unsigned long bootCount = 0;
 unsigned long lastSample = 0;
+
+// STABILIZE averaging, per sensor
+unsigned long surfSum[NUM_LDR] = {0};
+unsigned long surfCount = 0;
 
 void enterState(State s) {
   state = s;
@@ -102,7 +110,14 @@ void logSensors() {
   Serial.print("  ir=");     Serial.print(readIr());
   Serial.print("  door=");   Serial.print(doorClosed() ? "closed" : "open");
   Serial.print("  servo=");  Serial.print(servoAngle);
-  if (lightSurface) { Serial.print("  surface="); Serial.print(lightSurface); }
+  if (surfaceLogged) {
+    Serial.print("  surface=[");
+    for (int i = 0; i < NUM_LDR; i++) {
+      if (i) Serial.print(' ');
+      Serial.print(lightSurface[i]);
+    }
+    Serial.print(']');
+  }
   Serial.println();
 }
 
@@ -124,10 +139,10 @@ void runMission() {
   switch (state) {
 
     case BOOT:
-      // Average the outside light (rover boots outside the box).
+      // Average the outside light (rover boots outside the box). Front sensor ignored.
       if (millis() - lastSample >= 10) {
         lastSample = millis();
-        bootSum += readLight();
+        bootSum += readBoxLight();
         bootCount++;
       }
       if (inState() >= LIGHT_SAMPLE_MS) {
@@ -148,13 +163,12 @@ void runMission() {
       break;
 
     case WAIT_IN_BOX: {
-      // Know we're in the box: door close to the IR sensor AND dark compared to outside.
-      bool dark = readLight() < lightOutside * IN_BOX_FRACTION;
+      // Know we're in the box: door close to the IR sensor AND dark compared to outside
+      // (L2 + L3 only - the front sensor L1 is ignored).
+      bool dark = readBoxLight() < lightOutside * IN_BOX_FRACTION;
       if (heldFor(doorClosed() && dark, STABLE_MS)) {
-        lightInside = readLight();
-        lightThreshold = (lightInside + lightOutside) / 2;
+        lightInside = readBoxLight();
         Serial.print("Logged light INSIDE = ");  Serial.println(lightInside);
-        Serial.print("Outside threshold = ");    Serial.println(lightThreshold);
         enterState(WAIT_DOOR_OPEN);
       }
       break;
@@ -182,23 +196,30 @@ void runMission() {
       if (inState() >= DRIVE_TIME_MS) {
         brakeAll();
         Serial.println("Out of the box");
-        bootSum = 0; bootCount = 0;  // STABILIZE averages the surface light
+        for (int i = 0; i < NUM_LDR; i++) surfSum[i] = 0;
+        surfCount = 0;
         enterState(STABILIZE);
       }
       break;
 
     case STABILIZE:
-      // Stand still before unfurling, and log the light here as the sandstorm reference.
+      // Stand still before unfurling, and log each sensor's light as its sandstorm reference.
       brakeAll();
       if (millis() - lastSample >= 10) {
         lastSample = millis();
-        bootSum += readLight();   // reused for averaging (BOOT is long over)
-        bootCount++;
+        for (int i = 0; i < NUM_LDR; i++) surfSum[i] += readLightSensor(i);
+        surfCount++;
       }
       if (inState() >= STABLE_WAIT_MS) {
         stopMotors();
-        lightSurface = bootSum / bootCount;
-        Serial.print("Logged light SURFACE = "); Serial.println(lightSurface);
+        Serial.print("Logged light SURFACE = [");
+        for (int i = 0; i < NUM_LDR; i++) {
+          lightSurface[i] = surfSum[i] / surfCount;
+          if (i) Serial.print(' ');
+          Serial.print(lightSurface[i]);
+        }
+        Serial.println("]  (L1 L2 L3)");
+        surfaceLogged = true;
         servoMoveTo(SERVO_PARK_ANGLE);
         enterState(PARK_SERVO);
       }
@@ -218,21 +239,37 @@ void runMission() {
       if (servoAtTarget()) {
         Serial.println("UNFURLED - watching for sandstorm ('f' = furl now)");
         dimmingLogged = false;
+        for (int i = 0; i < NUM_LDR; i++) darkSince[i] = 0;
         enterState(UNFURLED);
       }
       break;
 
     case UNFURLED: {
-      // Sandstorm: light dims (~10 s), then stays dark for STORM_DARK_MS -> furl.
-      // Short blinks can't trigger it: dark must be continuous.
-      int light = readLight();
-      bool dim = light < lightSurface * STORM_DIM_FRACTION;
-      if (dim && !dimmingLogged) Serial.println("Light dimming...");
-      dimmingLogged = dim;
-      bool dark = light < lightSurface * STORM_DARK_FRACTION;
-      bool stormNow = heldFor(dark, STORM_DARK_MS);
-      if (stormNow || readPanelCommand() == 'f') {
-        Serial.println(stormNow ? "SANDSTORM - furling" : "Manual furl");
+      // Sandstorm: ANY one sensor dark (vs. its own surface light) for STORM_DARK_MS -> furl.
+      bool anyDim = false;
+      int darkSensor = -1;
+      unsigned long now = millis();
+      for (int i = 0; i < NUM_LDR; i++) {
+        int v = readLightSensor(i);
+        if (v < lightSurface[i] * STORM_DIM_FRACTION) anyDim = true;
+        if (v < lightSurface[i] * STORM_DARK_FRACTION) {
+          if (darkSince[i] == 0) darkSince[i] = now ? now : 1;
+          if (darkSensor < 0 && now - darkSince[i] >= STORM_DARK_MS) darkSensor = i;
+        } else {
+          darkSince[i] = 0;
+        }
+      }
+      if (anyDim && !dimmingLogged) Serial.println("Light dimming...");
+      dimmingLogged = anyDim;
+
+      if (darkSensor >= 0) {
+        stormSensor = darkSensor;
+        Serial.print("SANDSTORM (L"); Serial.print(stormSensor + 1); Serial.println(" dark) - furling");
+        servoMoveTo(SERVO_FURL_ANGLE);
+        enterState(FURL);
+      } else if (readPanelCommand() == 'f') {
+        stormSensor = -1;
+        Serial.println("Manual furl");
         servoMoveTo(SERVO_FURL_ANGLE);
         enterState(FURL);
       }
@@ -242,17 +279,30 @@ void runMission() {
     case FURL:
       // Both servos 180 -> 0, slowly. Ends at 0, so the next power-up can assume it.
       if (servoAtTarget()) {
-        Serial.println("FURLED (servos at 0, safe to power off) - waiting for light ('u' = unfurl now)");
+        Serial.print("FURLED (servos at 0, safe to power off) - ");
+        if (stormSensor >= 0) {
+          Serial.print("waiting for L"); Serial.print(stormSensor + 1); Serial.println(" to see light ('u' = unfurl now)");
+        } else {
+          Serial.println("send 'u' to unfurl");
+        }
         enterState(FURLED);
       }
       break;
 
     case FURLED: {
-      // Sandstorm over: light back for STORM_CLEAR_MS -> unfurl again.
-      bool clear = readLight() > lightSurface * STORM_CLEAR_FRACTION;
-      bool overNow = heldFor(clear, STORM_CLEAR_MS);
+      // Sandstorm over: the sensor that went dark sees light again for STORM_CLEAR_MS -> unfurl.
+      // After a manual furl (stormSensor = -1) only 'u' unfurls.
+      bool overNow = false;
+      if (stormSensor >= 0) {
+        bool clear = readLightSensor(stormSensor) > lightSurface[stormSensor] * STORM_CLEAR_FRACTION;
+        overNow = heldFor(clear, STORM_CLEAR_MS);
+      }
       if (overNow || readPanelCommand() == 'u') {
-        Serial.println(overNow ? "Sandstorm over - unfurling" : "Manual unfurl");
+        if (overNow) {
+          Serial.print("Sandstorm over (L"); Serial.print(stormSensor + 1); Serial.println(" light) - unfurling");
+        } else {
+          Serial.println("Manual unfurl");
+        }
         servoMoveTo(SERVO_UNFURL_ANGLE);
         enterState(UNFURL);
       }

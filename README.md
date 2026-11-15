@@ -1,6 +1,6 @@
 # SpaceApps
 
-Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives out (full speed, 2.5 s), stops, and unfurls its solar panels (servos 0° → 180°). When a sandstorm comes (light goes dark for 15 s) it furls (180° → 0°), and unfurls again once the light is back for 10 s.
+Rover firmware for an STM32F103C8T6 "Blue Pill". It detects that it is inside a box, waits for the door to open, drives out (full speed, 2.5 s), stops, and unfurls its solar panels (servos 0° → 180°). When a sandstorm comes (any one light sensor dark for 2 s) it furls (180° → 0°), and unfurls again once that same sensor sees light for 10 s.
 
 ## Hardware
 - STM32F103C8T6 Blue Pill (Roger Clark STM32 core)
@@ -25,18 +25,20 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 ## Mission states
 | State | Moves on when |
 |---|---|
-| BOOT | 2 s of outside light (average of the 3 sensors) logged; servos assumed at 0° |
+| BOOT | 2 s of outside light (average of L2 + L3, front sensor L1 ignored) logged; servos assumed at 0° |
 | STOW_SERVO | Both servos slowly to the in-box angle (0°, so already there) |
-| WAIT_IN_BOX | Door within ~5 cm **and** light < 50% of outside, for 2 s; inside light logged |
+| WAIT_IN_BOX | Door within ~5 cm (IR) **and** L2 + L3 light < 50% of outside, for 2 s; front sensor L1 ignored |
 | WAIT_DOOR_OPEN | IR no longer sees the door for 1 s |
 | DOOR_SETTLE | 5 s timer |
 | DRIVE_OUT | Full speed for 2.5 s (`DRIVE_SPEED`, `DRIVE_TIME_MS` in config.h), then brakes |
-| STABILIZE | Stands still 3 s; logs the surface light (sandstorm reference) |
+| STABILIZE | Stands still 3 s; logs each sensor's surface light (sandstorm reference) |
 | PARK_SERVO | Both servos slowly back to 0° (start/end angle) |
 | UNFURL | Both servos slowly 0° → 180° |
-| UNFURLED | Sandstorm: light below 30% of the surface light (logged in STABILIZE) for 15 s. `f` in the Serial Monitor forces it |
+| UNFURLED | Sandstorm: **any one** sensor below 30% of its own surface light for 2 s. `f` in the Serial Monitor forces it |
 | FURL | Both servos slowly 180° → 0° (safe to power off) |
-| FURLED | Sandstorm over: light above 60% of the surface light for 10 s, then unfurls again (loops). `u` forces it |
+| FURLED | Sandstorm over: **the sensor that went dark** is above 60% of its surface light for 10 s, then unfurls again (loops). After a manual furl only `u` unfurls |
+
+A loose light sensor floats at about 1000–2000. The dark threshold (30% of a lit reading of about 3000, so about 900) sits below that, so a loose sensor can't fake a sandstorm. Keep it that way when tuning `STORM_DARK_FRACTION`.
 
 ## Hardware test (`HardwareTest/HardwareTest.ino`)
 A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR sensor and 3 light sensors. It uses the pins in [`pinout.md`](pinout.md). Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud, Newline):

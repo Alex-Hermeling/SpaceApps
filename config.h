@@ -25,6 +25,7 @@ const int CIN2 = PB13;  // motor C direction
 // 3 light sensors: 3.3V -> LDR -> pin -> 8k -> GND  (brighter = higher value)
 const int NUM_LDR = 3;
 const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1..L3
+const int FRONT_LDR = 0;  // L1 (PA4) = front sensor: ignored for the in-box check
 // TCRT5000 IR reflective module (3-pin: VCC, GND, OUT), powered from 3.3V.
 //   OUT: level set by IR_CLOSE_LEVEL when something reflective is close.
 //   Set the trigger distance with the module's potentiometer.
@@ -49,13 +50,15 @@ const int SERVO_FURL_ANGLE   = 0;    // furl:   both servos 180 -> 0 (= park, so
 const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 deg = 1.35 s)
 
 // ---------------- Thresholds ----------------
-const float IN_BOX_FRACTION = 0.5;  // in box when light < outside light * this
+const float IN_BOX_FRACTION = 0.5;  // in box when L2+L3 light < outside light * this (front L1 ignored)
 
-// Sandstorm (test: lights dim over ~10 s, then go off). All relative to lightSurface,
-// the light logged while standing still after driving out.
+// Sandstorm: checked PER SENSOR, each against its own surface light
+// (logged while standing still after driving out). ANY one sensor dark -> furl.
+// A loose LDR floats at ~1000-2000, so keep "dark" below ~1000 (lit ~3000 * 0.3 = ~900)
+// or a loose sensor could fake a sandstorm.
 const float STORM_DIM_FRACTION   = 0.75;  // below this = "dimming" (log message only)
-const float STORM_DARK_FRACTION  = 0.3;   // below this = dark. Raise if the room never gets this dark
-const float STORM_CLEAR_FRACTION = 0.6;   // above this = sandstorm over
+const float STORM_DARK_FRACTION  = 0.3;   // below this = dark
+const float STORM_CLEAR_FRACTION = 0.6;   // the sensor that went dark is above this = sandstorm over
 
 // ---------------- Timings (ms) ----------------
 const unsigned long LIGHT_SAMPLE_MS  = 2000;   // BOOT: average outside light over this long
@@ -64,8 +67,8 @@ const unsigned long DOOR_DEBOUNCE_MS = 1000;   // door must read "open" this lon
 const unsigned long DOOR_SETTLE_MS   = 5000;   // wait after door opens before driving
 const unsigned long DRIVE_TIME_MS    = 2500;   // DRIVE_OUT: drive this long, then stop - raise to go further
 const unsigned long STABLE_WAIT_MS   = 3000;   // stand still before unfurling
-const unsigned long STORM_DARK_MS    = 15000;  // dark this long = sandstorm -> furl
-const unsigned long STORM_CLEAR_MS   = 10000;  // light back this long = storm over -> unfurl
+const unsigned long STORM_DARK_MS    = 2000;   // any one sensor dark this long = sandstorm -> furl
+const unsigned long STORM_CLEAR_MS   = 10000;  // that sensor light again this long = storm over -> unfurl
 const unsigned long LOG_EVERY_MS     = 500;
 
 // ---------------- Speeds (0..255) ----------------
