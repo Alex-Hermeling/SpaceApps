@@ -8,7 +8,7 @@ On the Blue Pill, **G** = GND.
 |---|---|---|
 | PWMA | **PA0** | Motor A speed (PWM, timer 2) |
 | AIN1 | **PA15** | Motor A direction |
-| AIN2 | **PA11** | Motor A direction. ⚠️ USB pin, see notes |
+| AIN2 | **PB14** | Motor A direction |
 | PWMB | **PA1** | Motor B speed (PWM, timer 2) |
 | BIN1 | **PB6** | Motor B direction |
 | BIN2 | **PB7** | Motor B direction |
@@ -65,13 +65,13 @@ All grounds must be connected together.
 |---|---|
 | PA2, PA3 | Digital, analog (ADC), PWM (timer 2) |
 | PB8, PB9 | Digital, PWM (timer 4) |
-| PB3, PB4, PB10, PB11, PB14, PB15 | Digital |
+| PB3, PB4, PB10, PB11, PB15 | Digital |
 
 ## Do not use
 | Pin | Why |
 |---|---|
 | PA9, PA10 | Serial upload / USART1 |
-| PA12 (and PA11) | USB data lines |
+| PA11, PA12 | USB data lines |
 | PA13, PA14 | ST-Link (SWD) |
 | PB2 | BOOT1 |
 | PC13, PC14, PC15 | Onboard LED and clock crystal; can only supply very little current |
@@ -79,6 +79,5 @@ All grounds must be connected together.
 ## Rules and notes
 - **PWM pins must not use timer 3** (PA6, PA7, PB0, PB1). The servo library takes over that whole timer. Those pins are fine for analog reads.
 - **Analog pins max 3.3 V.** The ADC pins are not 5 V tolerant.
-- **PA11 is a USB data pin.** AIN2 works there when uploading and using Serial through an ST-Link or USB-serial adapter. If the Blue Pill's own USB port is used, move AIN2 to PB14.
 - **PB3, PB4 and PA15 are JTAG pins.** The Roger Clark core turns JTAG off at startup, so they work as normal pins. On the official STMicroelectronics core they would need JTAG disabled in code.
 - **Keep pins in sync.** Pins are defined in `config.h` (main sketch) **and** at the top of `HardwareTest/HardwareTest.ino`. Change both.

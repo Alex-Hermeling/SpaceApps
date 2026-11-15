@@ -28,12 +28,12 @@ unsigned long lastLightPrint = 0;
 
 // ---- Motor pins (same as config.h) ----
 const int PWMA = PA0;
-const int AIN1 = PB12;
-const int AIN2 = PB13;
+const int AIN1 = PA15;
+const int AIN2 = PB14;
 const int PWMB = PA1;
-const int BIN1 = PB14;
-const int BIN2 = PB15;
-const int STBY = PA8;
+const int BIN1 = PB6;
+const int BIN2 = PB7;
+const int STBY = PB5;
 
 int speed = 100;  // 0..255, change with + / -
 
