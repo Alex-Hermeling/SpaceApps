@@ -61,6 +61,10 @@ const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 d
 // ---------------- Thresholds ----------------
 const float IN_BOX_FRACTION = 0.5;  // in box when L1+L2 light < outside light * this (front L3 ignored)
 
+// A light sensor reading below this is treated as INVALID (loose wire, short to GND,
+// broken sensor) and left out of every light decision. Real darkness reads ~400 with 8k.
+const int LDR_MIN_VALID = 50;
+
 // Sandstorm: checked PER SENSOR, each against its own surface light
 // (logged while standing still after driving out). ANY one sensor dark -> furl.
 // A loose LDR floats at ~1000-2000, so keep "dark" below ~1000 (lit ~3000 * 0.3 = ~900)

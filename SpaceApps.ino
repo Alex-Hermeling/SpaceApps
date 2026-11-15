@@ -105,7 +105,9 @@ void logSensors() {
   Serial.print(" [");
   for (int i = 0; i < NUM_LDR; i++) {
     if (i) Serial.print(' ');
-    Serial.print(readLightSensor(i));
+    int v = readLightSensor(i);
+    Serial.print(v);
+    if (!ldrValid(v)) Serial.print('!');  // ! = invalid reading (< LDR_MIN_VALID), ignored
   }
   Serial.print(']');
   Serial.print("  ir=");     Serial.print(readIr());
@@ -151,6 +153,8 @@ void runMission() {
       if (inState() >= LIGHT_SAMPLE_MS) {
         lightOutside = bootSum / bootCount;
         Serial.print("Logged light OUTSIDE = "); Serial.println(lightOutside);
+        if (!ldrValid(lightOutside))
+          Serial.println("WARNING: no valid light sensor at boot - the in-box check can't pass. Check the wiring.");
         servoMoveTo(SERVO_STOW_ANGLE);
         enterState(STOW_SERVO);
       }
@@ -225,6 +229,12 @@ void runMission() {
           Serial.print(lightSurface[i]);
         }
         Serial.println("]  (L1 rear, L2 side, L3 front)");
+        for (int i = 0; i < NUM_LDR; i++) {
+          if (!ldrValid(lightSurface[i])) {
+            Serial.print("WARNING: L"); Serial.print(i + 1);
+            Serial.println(" reads invalid - it is ignored for sandstorm detection");
+          }
+        }
         surfaceLogged = true;
         servoMoveTo(SERVO_PARK_ANGLE);
         enterState(PARK_SERVO);
@@ -257,6 +267,9 @@ void runMission() {
       unsigned long now = millis();
       for (int i = 0; i < NUM_LDR; i++) {
         int v = readLightSensor(i);
+        // Skip sensors that read invalid now, or were invalid when the surface light was
+        // logged: a loose / shorted sensor must not fake a sandstorm.
+        if (!ldrValid(v) || !ldrValid(lightSurface[i])) { darkSince[i] = 0; continue; }
         if (v < lightSurface[i] * STORM_DIM_FRACTION) anyDim = true;
         if (v < lightSurface[i] * STORM_DARK_FRACTION) {
           if (darkSince[i] == 0) darkSince[i] = now ? now : 1;
@@ -300,7 +313,10 @@ void runMission() {
       // After a manual furl (stormSensor = -1) only 'u' unfurls.
       bool overNow = false;
       if (stormSensor >= 0) {
-        bool clear = readLightSensor(stormSensor) > lightSurface[stormSensor] * STORM_CLEAR_FRACTION;
+        // An invalid reading (< LDR_MIN_VALID) is never "clear". If that sensor breaks
+        // while furled, the rover stays furled until 'u'.
+        int v = readLightSensor(stormSensor);
+        bool clear = ldrValid(v) && v > lightSurface[stormSensor] * STORM_CLEAR_FRACTION;
         overNow = heldFor(clear, STORM_CLEAR_MS);
       }
       if (overNow || readPanelCommand() == 'u') {

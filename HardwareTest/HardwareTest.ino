@@ -36,6 +36,7 @@ const int NUM_LDR = 3;
 const int LDR_PINS[NUM_LDR] = {PA4, PA2, PB1};  // L1 rear, L2 side, L3 front
 const char* LDR_NAMES[NUM_LDR] = {"rear", "side", "front"};
 const int FRONT_LDR = 2;  // L3: ignored for the in-box check in the main sketch
+const int LDR_MIN_VALID = 50;  // below this = invalid (loose wire / short / broken), same as config.h
 
 // ---------------- State ----------------
 int speed = 100;  // 0..255, change with + / -
@@ -181,23 +182,33 @@ int readLdr(int pin) {
 }
 
 // Prints each sensor with its position, plus "box" = the light the main sketch
-// uses for the in-box check (all sensors except the front one).
+// uses for the in-box check (valid sensors except the front one).
+// A reading below LDR_MIN_VALID is marked "!" and left out of avg and box, like the main sketch.
 void printLight() {
   long total = 0, box = 0;
+  int nTotal = 0, nBox = 0;
   Serial.print("LIGHT");
   for (int i = 0; i < NUM_LDR; i++) {
     int v = readLdr(LDR_PINS[i]);
-    total += v;
-    if (i != FRONT_LDR) box += v;
+    bool valid = v >= LDR_MIN_VALID;
+    if (valid) {
+      total += v; nTotal++;
+      if (i != FRONT_LDR) { box += v; nBox++; }
+    }
     Serial.print("  L"); Serial.print(i + 1);
     Serial.print(' '); Serial.print(LDR_NAMES[i]); Serial.print("=");
     if (v < 1000) Serial.print(' ');
     if (v < 100)  Serial.print(' ');
     if (v < 10)   Serial.print(' ');
     Serial.print(v);
+    Serial.print(valid ? ' ' : '!');
   }
-  Serial.print("   avg="); Serial.print(total / NUM_LDR);
-  Serial.print("   box(L1+L2)="); Serial.println(box / (NUM_LDR - 1));
+  Serial.print("  avg=");
+  if (nTotal) Serial.print(total / nTotal); else Serial.print("--");
+  Serial.print("   box(L1+L2)=");
+  if (nBox) Serial.print(box / nBox); else Serial.print("--");
+  if (nTotal < NUM_LDR) Serial.print("   ! = invalid (< 50), check wiring");
+  Serial.println();
 }
 
 // ---------------- Help ----------------

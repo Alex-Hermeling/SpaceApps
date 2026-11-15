@@ -40,6 +40,8 @@ See **[pinout.md](pinout.md)** for every pin, power wiring, free pins and pin ru
 
 A loose light sensor floats at about 1000–2000. The dark threshold (30% of a lit reading of about 3000, so about 900) sits below that, so a loose sensor can't fake a sandstorm. Keep it that way when tuning `STORM_DARK_FRACTION`.
 
+A reading **below 50** is treated as invalid (loose wire, short to ground, broken sensor; real darkness reads about 400). Invalid sensors are left out of the box check and the sandstorm check, and are marked `!` in the serial log (`LDR_MIN_VALID` in config.h). If the sensor that triggered a furl goes invalid, the rover stays furled until `u`.
+
 ## Hardware test (`HardwareTest/HardwareTest.ino`)
 A separate sketch to test all hardware on its own: 3 motors, 2 servos, the IR sensor and 3 light sensors. It uses the pins in [`pinout.md`](pinout.md). Open it in the Arduino IDE, upload it, and type commands in the Serial Monitor (115200 baud, Newline):
 

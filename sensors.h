@@ -17,18 +17,31 @@ inline int readLightSensor(int i) {
   return sum / 16;
 }
 
-// Average of all 3 sensors (logging only).
+// A reading below LDR_MIN_VALID is probably a loose wire / short / broken sensor.
+inline bool ldrValid(int v) { return v >= LDR_MIN_VALID; }
+
+// Average of all VALID sensors (logging only). 0 if none are valid.
 inline int readLight() {
-  long sum = 0;
-  for (int i = 0; i < NUM_LDR; i++) sum += readLightSensor(i);
-  return sum / NUM_LDR;
+  long sum = 0; int n = 0;
+  for (int i = 0; i < NUM_LDR; i++) {
+    int v = readLightSensor(i);
+    if (ldrValid(v)) { sum += v; n++; }
+  }
+  return n ? sum / n : 0;
 }
 
-// Light for the in-box check: average of all sensors except the front one (FRONT_LDR).
+// Light for the in-box check: average of the VALID sensors except the front one (FRONT_LDR).
+// If none of those are valid, falls back to the front sensor; 0 if nothing is valid.
 inline int readBoxLight() {
-  long sum = 0;
-  for (int i = 0; i < NUM_LDR; i++) if (i != FRONT_LDR) sum += readLightSensor(i);
-  return sum / (NUM_LDR - 1);
+  long sum = 0; int n = 0;
+  for (int i = 0; i < NUM_LDR; i++) {
+    if (i == FRONT_LDR) continue;
+    int v = readLightSensor(i);
+    if (ldrValid(v)) { sum += v; n++; }
+  }
+  if (n) return sum / n;
+  int f = readLightSensor(FRONT_LDR);
+  return ldrValid(f) ? f : 0;
 }
 
 // TCRT5000 output: IR_CLOSE_LEVEL = something close.
