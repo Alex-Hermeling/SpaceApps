@@ -41,7 +41,7 @@ int speed = 100;  // 0..255, change with + / -
 Servo servos[2];
 int servoAngle[2] = {0, 0};  // assumed at power-up: every program ends with the servos at 0
 int sel = 0;                 // selected servo: 0 = servo 1, 1 = servo 2
-int servoStepMs = 12;        // ms per degree: higher = slower. 12 -> 180 deg in 2.2 s. 0 = full speed
+int servoStepMs = 15;        // ms per degree: higher = slower. 15 -> 180 deg in 2.7 s. 0 = full speed
 
 bool irWatch = false;
 bool lightWatch = false;

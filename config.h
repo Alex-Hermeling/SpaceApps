@@ -44,7 +44,7 @@ const int SERVO_PINS[NUM_SERVOS] = {PA6, PA7};
 // so at power-up we ASSUME it is there (its real position can't be read).
 const int SERVO_PARK_ANGLE = 0;   // start + end position (boot at 0)
 const int SERVO_STOW_ANGLE = 0;   // position while in the box
-const unsigned long SERVO_STEP_MS = 20;  // ms per degree: higher = slower (90 deg = 1.8 s)
+const unsigned long SERVO_STEP_MS = 15;  // ms per degree: higher = slower (90 deg = 1.35 s)
 
 // ---------------- Thresholds ----------------
 const float IN_BOX_FRACTION = 0.5;  // in box when light < outside light * this
